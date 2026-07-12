@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% block title %}Accueil - RecrutIA ADER Fès{% endblock %}
+
+{% block content %}
+
+<!-- HERO -->
+<div class="hero">
+  <div class="container">
+    <div class="mb-3">
+      <i class="fas fa-brain" style="font-size:3.5rem; color:var(--ader-or);"></i>
+    </div>
+    <h1>RecrutIA</h1>
+    <p class="lead">Système intelligent de présélection des candidats</p>
+    <p style="color:rgba(255,255,255,.7);">Agence de Développement de la Région de Fès-Meknès</p>
+    <div class="mt-4 d-flex gap-3 justify-content-center flex-wrap">
+      <a href="/candidature" class="btn btn-or btn-lg px-4">
+        <i class="fas fa-file-upload me-2"></i>Déposer ma candidature
+      </a>
+      <a href="/dashboard" class="btn btn-outline-light btn-lg px-4">
+        <i class="fas fa-chart-bar me-2"></i>Espace RH
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- COMMENT CA MARCHE -->
+<div class="container my-5">
+  <h2 class="text-center fw-bold mb-4" style="color:var(--ader-bleu);">Comment ça fonctionne ?</h2>
+  <div class="row g-4 text-center">
+    <div class="col-md-4">
+      <div class="card h-100 p-4">
+        <div class="step-icon"><i class="fas fa-upload"></i></div>
+        <h5 class="fw-bold">1. Déposez votre CV</h5>
+        <p class="text-muted">Le candidat uploade son CV en PDF. Notre système extrait automatiquement les informations clés.</p>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card h-100 p-4">
+        <div class="step-icon"><i class="fas fa-robot"></i></div>
+        <h5 class="fw-bold">2. Analyse IA</h5>
+        <p class="text-muted">Notre algorithme Random Forest analyse le profil et calcule un score de correspondance avec le poste.</p>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card h-100 p-4">
+        <div class="step-icon"><i class="fas fa-check-circle"></i></div>
+        <h5 class="fw-bold">3. Résultat immédiat</h5>
+        <p class="text-muted">Le candidat reçoit son résultat instantanément. Le RH accède au dashboard avec tous les profils classés.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- STATS -->
+<div style="background:var(--ader-bleu); color:#fff;" class="py-5">
+  <div class="container">
+    <div class="row text-center g-4">
+      <div class="col-md-3">
+        <div style="font-size:2.5rem; font-weight:800; color:var(--ader-or);">77%</div>
+        <div>Précision du modèle IA</div>
+      </div>
+      <div class="col-md-3">
+        <div style="font-size:2.5rem; font-weight:800; color:var(--ader-or);">635</div>
+        <div>Candidatures analysées (dataset)</div>
+      </div>
+      <div class="col-md-3">
+        <div style="font-size:2.5rem; font-weight:800; color:var(--ader-or);">3</div>
+        <div>Postes couverts</div>
+      </div>
+      <div class="col-md-3">
+        <div style="font-size:2.5rem; font-weight:800; color:var(--ader-or);">< 1s</div>
+        <div>Temps d'analyse IA</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- POSTES -->
+<div class="container my-5">
+  <h2 class="text-center fw-bold mb-4" style="color:var(--ader-bleu);">Postes disponibles</h2>
+  <div class="row g-4">
+    <div class="col-md-4">
+      <div class="card h-100">
+        <div class="card-body p-4">
+          <i class="fas fa-briefcase fa-2x mb-3" style="color:var(--ader-or);"></i>
+          <h5 class="fw-bold">Chargé Gestion des Marchés</h5>
+          <p class="text-muted">Profil recherché : Master en Finance, Audit ou Comptabilité avec expérience en marchés publics.</p>
+          <a href="/candidature" class="btn btn-ader btn-sm">Postuler</a>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card h-100">
+        <div class="card-body p-4">
+          <i class="fas fa-archive fa-2x mb-3" style="color:var(--ader-or);"></i>
+          <h5 class="fw-bold">Aide Archiviste</h5>
+          <p class="text-muted">Profil recherché : Technicien Spécialisé ou équivalent, idéalement en informatique ou gestion documentaire.</p>
+          <a href="/candidature" class="btn btn-ader btn-sm">Postuler</a>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card h-100">
+        <div class="card-body p-4">
+          <i class="fas fa-server fa-2x mb-3" style="color:var(--ader-or);"></i>
+          <h5 class="fw-bold">Cadre Système d'Information</h5>
+          <p class="text-muted">Profil recherché : Master en Informatique, Réseaux ou SI avec expérience en développement ou administration.</p>
+          <a href="/candidature" class="btn btn-ader btn-sm">Postuler</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Connexion RH - RecrutIA{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+  <div class="row justify-content-center">
+    <div class="col-md-5">
+
+      <div class="card">
+        <div class="card-header-ader text-center">
+          <i class="fas fa-lock fa-2x mb-2"></i>
+          <h5 class="mb-0">Espace RH — Connexion</h5>
+          <small style="color:rgba(255,255,255,.7);">Réservé au personnel ADER Fès</small>
+        </div>
+        <div class="card-body p-4">
+
+          {% with messages = get_flashed_messages(with_categories=true) %}
+            {% for cat, msg in messages %}
+              <div class="alert alert-{{ cat }} py-2">{{ msg }}</div>
+            {% endfor %}
+          {% endwith %}
+
+          <form method="POST" action="/login">
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Identifiant</label>
+              <div class="input-group">
+                <span class="input-group-text"><i class="fas fa-user"></i></span>
+                <input type="text" name="username" class="form-control"
+                       placeholder="Votre identifiant" required autofocus/>
+              </div>
+            </div>
+            <div class="mb-4">
+              <label class="form-label fw-semibold">Mot de passe</label>
+              <div class="input-group">
+                <span class="input-group-text"><i class="fas fa-key"></i></span>
+                <input type="password" name="password" class="form-control"
+                       placeholder="Votre mot de passe" required/>
+              </div>
+            </div>
+            <button type="submit" class="btn btn-ader w-100 py-2">
+              <i class="fas fa-sign-in-alt me-2"></i>Se connecter
+            </button>
+          </form>
+
+          <hr class="my-3"/>
+          <p class="text-center text-muted small mb-0">
+            <i class="fas fa-info-circle me-1"></i>
+            Identifiant : <code>rh_ader</code> &nbsp;|&nbsp; Mot de passe : <code>ader2024</code>
+          </p>
+
+        </div>
+      </div>
+
+      <div class="text-center mt-3">
+        <a href="/" class="text-muted small">
+          <i class="fas fa-arrow-left me-1"></i>Retour à l'accueil
+        </a>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}

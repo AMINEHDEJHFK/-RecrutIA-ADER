@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+{% block title %}Dashboard RH - RecrutIA{% endblock %}
+
+{% block content %}
+<div class="container-fluid my-4 px-4">
+
+  <!-- En-tête -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h3 class="fw-bold mb-0" style="color:var(--ader-bleu);">
+        <i class="fas fa-chart-bar me-2"></i>Dashboard RH
+      </h3>
+      <small class="text-muted">Suivi des candidatures — ADER Fès</small>
+    </div>
+    <a href="/candidature" class="btn btn-or">
+      <i class="fas fa-plus me-1"></i>Nouvelle candidature
+    </a>
+  </div>
+
+  <!-- STATS -->
+  <div class="row g-3 mb-4">
+    <div class="col-md-3">
+      <div class="card text-center p-3">
+        <div style="font-size:2rem; font-weight:800; color:var(--ader-bleu);">{{ stats.total }}</div>
+        <div class="text-muted">Total candidatures</div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card text-center p-3">
+        <div style="font-size:2rem; font-weight:800; color:#198754;">{{ stats.preselectionnes }}</div>
+        <div class="text-muted">Présélectionnés</div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card text-center p-3">
+        <div style="font-size:2rem; font-weight:800; color:#dc3545;">{{ stats.non_retenus }}</div>
+        <div class="text-muted">Non retenus</div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card text-center p-3">
+        <div style="font-size:2rem; font-weight:800; color:var(--ader-or);">{{ stats.taux }}%</div>
+        <div class="text-muted">Taux de présélection</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filtres -->
+  <div class="card mb-3 p-3">
+    <div class="row g-2 align-items-center">
+      <div class="col-md-3">
+        <input type="text" id="searchInput" class="form-control" placeholder="Rechercher un candidat..."/>
+      </div>
+      <div class="col-md-2">
+        <select id="filterPoste" class="form-select">
+          <option value="">Tous les postes</option>
+          <option value="CGM">Chargé Gestion Marchés</option>
+          <option value="ARCHIVISTE">Aide Archiviste</option>
+          <option value="SI">Cadre SI</option>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <select id="filterDecision" class="form-select">
+          <option value="">Toutes décisions</option>
+          <option value="Présélectionné">Présélectionnés</option>
+          <option value="Non retenu">Non retenus</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tableau candidats -->
+  <div class="card">
+    <div class="card-body p-0">
+      {% if candidats %}
+      <div class="table-responsive">
+        <table class="table table-hover mb-0" id="tableCandidat">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Candidat</th>
+              <th>Poste</th>
+              <th>Diplôme</th>
+              <th>Expérience</th>
+              <th>Score IA</th>
+              <th>Décision</th>
+              <th>Date dépôt</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for c in candidats %}
+            <tr data-poste="{{ c.poste }}" data-decision="{{ c.decision }}">
+              <td class="text-muted">{{ c.id }}</td>
+              <td><strong>{{ c.prenom }} {{ c.nom }}</strong><br>
+                  <small class="text-muted">{{ c.email }}</small></td>
+              <td>
+                {% if c.poste == 'CGM' %}
+                  <span class="badge bg-primary">Gestion Marchés</span>
+                {% elif c.poste == 'ARCHIVISTE' %}
+                  <span class="badge bg-info text-dark">Archiviste</span>
+                {% elif c.poste == 'SI' %}
+                  <span class="badge bg-secondary">Cadre SI</span>
+                {% else %}
+                  <span class="badge bg-dark">{{ c.poste }}</span>
+                {% endif %}
+              </td>
+              <td>{{ c.diplome }}</td>
+              <td>{{ c.experience }} ans</td>
+              <td>
+                <div class="progress" style="height:18px; width:90px;">
+                  <div class="progress-bar {% if c.score_ia >= 0.5 %}bg-success{% else %}bg-danger{% endif %}"
+                       style="width:{{ (c.score_ia * 100)|int }}%">
+                    {{ (c.score_ia * 100)|round(1) }}%
+                  </div>
+                </div>
+              </td>
+              <td>
+                {% if c.decision == "Présélectionné" %}
+                  <span class="badge bg-success"><i class="fas fa-check me-1"></i>Présélectionné</span>
+                {% else %}
+                  <span class="badge bg-danger"><i class="fas fa-times me-1"></i>Non retenu</span>
+                {% endif %}
+              </td>
+              <td><small class="text-muted">{{ c.date_depot.strftime('%d/%m/%Y') if c.date_depot else '' }}</small></td>
+              <td>
+                <a href="/candidat/{{ c.id }}" class="btn btn-sm btn-ader">
+                  <i class="fas fa-eye"></i>
+                </a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="text-center py-5 text-muted">
+        <i class="fas fa-inbox fa-3x mb-3"></i>
+        <p>Aucune candidature pour le moment.</p>
+        <a href="/candidature" class="btn btn-ader">Ajouter une candidature</a>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Recherche et filtre
+function filtrer() {
+  const search = document.getElementById('searchInput').value.toLowerCase();
+  const poste  = document.getElementById('filterPoste').value;
+  const dec    = document.getElementById('filterDecision').value;
+
+  document.querySelectorAll('#tableCandidat tbody tr').forEach(row => {
+    const texte   = row.innerText.toLowerCase();
+    const rPoste  = row.dataset.poste;
+    const rDec    = row.dataset.decision;
+
+    const okSearch = texte.includes(search);
+    const okPoste  = !poste || rPoste === poste;
+    const okDec    = !dec   || rDec   === dec;
+
+    row.style.display = okSearch && okPoste && okDec ? '' : 'none';
+  });
+}
+
+document.getElementById('searchInput').addEventListener('input', filtrer);
+document.getElementById('filterPoste').addEventListener('change', filtrer);
+document.getElementById('filterDecision').addEventListener('change', filtrer);
+</script>
+{% endblock %}

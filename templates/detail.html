@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block title %}Détail candidat - RecrutIA{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+
+      <a href="/dashboard" class="btn btn-sm btn-outline-secondary mb-3">
+        <i class="fas fa-arrow-left me-1"></i>Retour au dashboard
+      </a>
+
+      <div class="card">
+        <div class="card-header-ader d-flex justify-content-between align-items-center">
+          <div>
+            <h5 class="mb-0">{{ candidat.prenom }} {{ candidat.nom }}</h5>
+            <small style="color:rgba(255,255,255,.7);">Candidature #{{ candidat.id }}</small>
+          </div>
+          {% if candidat.decision == "Présélectionné" %}
+            <span class="badge bg-success fs-6"><i class="fas fa-check me-1"></i>Présélectionné</span>
+          {% else %}
+            <span class="badge bg-danger fs-6"><i class="fas fa-times me-1"></i>Non retenu</span>
+          {% endif %}
+        </div>
+        <div class="card-body p-4">
+
+          <!-- Score -->
+          <div class="text-center mb-4">
+            <div style="font-size:3.5rem; font-weight:800;
+                        color:{% if score >= 50 %}#198754{% else %}#dc3545{% endif %};">
+              {{ score }}%
+            </div>
+            <div class="text-muted">Score de correspondance IA</div>
+            <div class="progress mt-2" style="height:22px;">
+              <div class="progress-bar {% if score >= 50 %}bg-success{% else %}bg-danger{% endif %}"
+                   style="width:{{ score }}%">{{ score }}%</div>
+            </div>
+          </div>
+
+          <hr/>
+
+          <!-- Détails -->
+          <div class="row g-3">
+            <div class="col-md-6">
+              <h6 class="fw-bold" style="color:var(--ader-bleu);">
+                <i class="fas fa-user me-1"></i>Informations personnelles
+              </h6>
+              <table class="table table-sm">
+                <tr><td class="text-muted">Email</td><td>{{ candidat.email or '—' }}</td></tr>
+                <tr><td class="text-muted">Téléphone</td><td>{{ candidat.telephone or '—' }}</td></tr>
+                <tr><td class="text-muted">Date dépôt</td>
+                    <td>{{ candidat.date_depot.strftime('%d/%m/%Y à %H:%M') if candidat.date_depot else '—' }}</td></tr>
+              </table>
+            </div>
+            <div class="col-md-6">
+              <h6 class="fw-bold" style="color:var(--ader-bleu);">
+                <i class="fas fa-graduation-cap me-1"></i>Formation & Expérience
+              </h6>
+              <table class="table table-sm">
+                <tr><td class="text-muted">Poste visé</td><td><strong>{{ candidat.poste }}</strong></td></tr>
+                <tr><td class="text-muted">Diplôme</td><td>{{ candidat.diplome }}</td></tr>
+                <tr><td class="text-muted">Spécialité</td><td>{{ candidat.specialite }}</td></tr>
+                <tr><td class="text-muted">École</td><td>{{ candidat.ecole }}</td></tr>
+                <tr><td class="text-muted">Promotion</td><td>{{ candidat.promotion }}</td></tr>
+                <tr><td class="text-muted">Expérience</td><td>{{ candidat.experience }} ans</td></tr>
+              </table>
+            </div>
+          </div>
+
+          {% if candidat.cv_filename %}
+          <div class="alert alert-info mt-3 py-2">
+            <i class="fas fa-file-pdf me-2"></i>
+            CV déposé : <strong>{{ candidat.cv_filename }}</strong>
+          </div>
+          {% endif %}
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

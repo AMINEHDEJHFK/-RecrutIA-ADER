@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}Résultat candidature - RecrutIA{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-7">
+      <div class="card text-center">
+        <div class="card-header-ader">
+          <h4 class="mb-0"><i class="fas fa-poll me-2"></i>Résultat de votre candidature</h4>
+        </div>
+        <div class="card-body p-5">
+
+          {% if candidat.decision == "Présélectionné" %}
+            <div class="mb-3">
+              <i class="fas fa-check-circle fa-5x" style="color:#198754;"></i>
+            </div>
+            <h2 class="fw-bold" style="color:#198754;">Félicitations !</h2>
+            <p class="lead">Votre profil correspond au poste de <strong>{{ candidat.poste }}</strong></p>
+            <div class="badge-score-ok d-inline-block fs-5 mb-3">Score IA : {{ score }}%</div>
+            <div class="alert alert-success">
+              <i class="fas fa-envelope me-2"></i>
+              Vous serez contacté(e) prochainement par l'équipe RH de l'ADER Fès pour la suite du processus.
+            </div>
+          {% else %}
+            <div class="mb-3">
+              <i class="fas fa-times-circle fa-5x" style="color:#dc3545;"></i>
+            </div>
+            <h2 class="fw-bold" style="color:#dc3545;">Candidature non retenue</h2>
+            <p class="lead">Votre profil ne correspond pas aux critères requis pour le poste de <strong>{{ candidat.poste }}</strong></p>
+            <div class="badge-score-ko d-inline-block fs-5 mb-3">Score IA : {{ score }}%</div>
+            <div class="alert alert-warning">
+              <i class="fas fa-info-circle me-2"></i>
+              Nous vous remercions de votre intérêt pour l'ADER Fès. Votre dossier sera conservé pour de futures opportunités.
+            </div>
+          {% endif %}
+
+          <!-- Récapitulatif -->
+          <div class="card mt-4 text-start">
+            <div class="card-body">
+              <h6 class="fw-bold mb-3" style="color:var(--ader-bleu);">
+                <i class="fas fa-user me-1"></i> Récapitulatif de votre profil
+              </h6>
+              <table class="table table-sm mb-0">
+                <tr><td class="text-muted">Nom complet</td><td><strong>{{ candidat.prenom }} {{ candidat.nom }}</strong></td></tr>
+                <tr><td class="text-muted">Poste</td><td>{{ candidat.poste }}</td></tr>
+                <tr><td class="text-muted">Diplôme</td><td>{{ candidat.diplome }}</td></tr>
+                <tr><td class="text-muted">Spécialité</td><td>{{ candidat.specialite }}</td></tr>
+                <tr><td class="text-muted">École</td><td>{{ candidat.ecole }}</td></tr>
+                <tr><td class="text-muted">Expérience</td><td>{{ candidat.experience }} ans</td></tr>
+              </table>
+            </div>
+          </div>
+
+          <!-- Barre de score -->
+          <div class="mt-4">
+            <label class="fw-semibold mb-2">Score de correspondance IA</label>
+            <div class="progress">
+              <div class="progress-bar {% if score >= 50 %}bg-success{% else %}bg-danger{% endif %}"
+                   style="width:{{ score }}%">{{ score }}%</div>
+            </div>
+          </div>
+
+          <div class="mt-4 d-flex gap-3 justify-content-center">
+            <a href="/candidature" class="btn btn-ader">
+              <i class="fas fa-redo me-2"></i>Nouvelle candidature
+            </a>
+            <a href="/" class="btn btn-outline-secondary">
+              <i class="fas fa-home me-2"></i>Accueil
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

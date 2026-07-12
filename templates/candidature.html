@@ -1,0 +1,223 @@
+{% extends "base.html" %}
+{% block title %}Déposer ma candidature - RecrutIA{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+
+      <div class="card">
+        <div class="card-header-ader">
+          <h4 class="mb-0"><i class="fas fa-file-upload me-2"></i>Déposer ma candidature</h4>
+          <small style="color:rgba(255,255,255,.7);">Uploadez votre CV — les informations sont extraites automatiquement</small>
+        </div>
+        <div class="card-body p-4">
+
+          <!-- Upload CV -->
+          <div class="upload-zone mb-4" id="uploadZone">
+            <i class="fas fa-cloud-upload-alt fa-3x mb-2" style="color:var(--ader-or);"></i>
+            <p class="mb-1 fw-bold">Glissez votre CV ici ou cliquez pour choisir</p>
+            <small class="text-muted">Format PDF uniquement — Max 10 MB</small>
+            <input type="file" id="cvFile" accept=".pdf" style="display:none"/>
+          </div>
+          <div id="uploadStatus" class="text-center mb-3" style="display:none;">
+            <div class="spinner-border spinner-border-sm text-primary me-2"></div>
+            <span>Extraction des informations en cours...</span>
+          </div>
+
+          <hr/>
+
+          <!-- Formulaire -->
+          <form method="POST" action="/candidature" enctype="multipart/form-data" id="mainForm">
+            <input type="hidden" name="cv" id="cvHiddenName"/>
+
+            <div class="row g-3">
+              <!-- Infos personnelles -->
+              <div class="col-12">
+                <h6 class="fw-bold" style="color:var(--ader-bleu);">
+                  <i class="fas fa-user me-1"></i> Informations personnelles
+                </h6>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Nom *</label>
+                <input type="text" name="nom" id="f_nom" class="form-control" required placeholder="EX : SAGHIRI"/>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Prénom *</label>
+                <input type="text" name="prenom" id="f_prenom" class="form-control" required placeholder="Ex : Amine"/>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Email *</label>
+                <input type="email" name="email" id="f_email" class="form-control" required placeholder="email@exemple.com"/>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Téléphone</label>
+                <input type="text" name="telephone" id="f_telephone" class="form-control" placeholder="06XXXXXXXX"/>
+              </div>
+
+              <!-- Poste -->
+              <div class="col-12 mt-2">
+                <h6 class="fw-bold" style="color:var(--ader-bleu);">
+                  <i class="fas fa-briefcase me-1"></i> Poste souhaité
+                </h6>
+              </div>
+              <div class="col-12">
+                <label class="form-label fw-semibold">Poste *</label>
+                <select name="poste" class="form-select" required>
+                  <option value="">-- Choisir un poste --</option>
+                  {% for p in postes %}
+                  <option value="{{ p }}">
+                    {% if p == 'CGM' %}Chargé de la Gestion des Marchés
+                    {% elif p == 'ARCHIVISTE' %}Aide Archiviste
+                    {% elif p == 'SI' %}Cadre Système d'Information
+                    {% else %}{{ p }}{% endif %}
+                  </option>
+                  {% endfor %}
+                </select>
+              </div>
+
+              <!-- Formation -->
+              <div class="col-12 mt-2">
+                <h6 class="fw-bold" style="color:var(--ader-bleu);">
+                  <i class="fas fa-graduation-cap me-1"></i> Formation
+                </h6>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Diplôme *</label>
+                <select name="diplome" id="f_diplome" class="form-select" required>
+                  <option value="">-- Choisir --</option>
+                  {% for d in diplomes %}
+                  <option value="{{ d }}">{{ d }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Spécialité *</label>
+                <input type="text" name="specialite" id="f_specialite" class="form-control"
+                       required placeholder="Ex : Gestion Financière"/>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">École / Établissement *</label>
+                <input type="text" name="ecole" id="f_ecole" class="form-control"
+                       required placeholder="Ex : ENCG Fès"/>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Année d'obtention *</label>
+                <input type="number" name="promotion" id="f_promotion" class="form-control"
+                       min="1990" max="2024" value="2020" required/>
+              </div>
+
+              <!-- Expérience -->
+              <div class="col-12 mt-2">
+                <h6 class="fw-bold" style="color:var(--ader-bleu);">
+                  <i class="fas fa-clock me-1"></i> Expérience professionnelle
+                </h6>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Années d'expérience *</label>
+                <input type="number" name="experience" id="f_experience" class="form-control"
+                       min="0" max="40" value="0" required/>
+              </div>
+
+              <!-- CV hidden field -->
+              <input type="file" name="cv" id="cvFileForm" style="display:none"/>
+
+              <div class="col-12 mt-3">
+                <div class="alert alert-info py-2" role="alert">
+                  <i class="fas fa-info-circle me-1"></i>
+                  <small>Vos données sont traitées conformément au RGPD. Elles ne seront utilisées qu'à des fins de recrutement.</small>
+                </div>
+              </div>
+
+              <div class="col-12 text-center mt-2">
+                <button type="submit" class="btn btn-ader btn-lg px-5">
+                  <i class="fas fa-paper-plane me-2"></i>Envoyer ma candidature
+                </button>
+              </div>
+            </div>
+          </form>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Upload zone click
+const zone = document.getElementById('uploadZone');
+const cvFile = document.getElementById('cvFile');
+const cvFileForm = document.getElementById('cvFileForm');
+
+zone.addEventListener('click', () => cvFile.click());
+
+zone.addEventListener('dragover', e => {
+  e.preventDefault();
+  zone.style.background = '#fffbf0';
+});
+zone.addEventListener('dragleave', () => zone.style.background = '');
+zone.addEventListener('drop', e => {
+  e.preventDefault();
+  if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+});
+
+cvFile.addEventListener('change', () => {
+  if (cvFile.files[0]) handleFile(cvFile.files[0]);
+});
+
+function handleFile(file) {
+  if (!file.name.endsWith('.pdf')) {
+    alert('Veuillez uploader un fichier PDF.');
+    return;
+  }
+
+  // Afficher le nom du fichier
+  zone.innerHTML = `<i class="fas fa-file-pdf fa-2x mb-2" style="color:var(--ader-or);"></i>
+    <p class="mb-0 fw-bold">${file.name}</p>
+    <small class="text-success"><i class="fas fa-check me-1"></i>Fichier chargé — extraction en cours...</small>`;
+
+  document.getElementById('uploadStatus').style.display = 'block';
+
+  // Envoyer pour extraction
+  const fd = new FormData();
+  fd.append('cv', file);
+
+  fetch('/extraire_cv', { method: 'POST', body: fd })
+    .then(r => r.json())
+    .then(data => {
+      document.getElementById('uploadStatus').style.display = 'none';
+      // Remplir le formulaire
+      if (data.nom)        document.getElementById('f_nom').value = data.nom;
+      if (data.prenom)     document.getElementById('f_prenom').value = data.prenom;
+      if (data.email)      document.getElementById('f_email').value = data.email;
+      if (data.telephone)  document.getElementById('f_telephone').value = data.telephone;
+      if (data.specialite) document.getElementById('f_specialite').value = data.specialite;
+      if (data.ecole)      document.getElementById('f_ecole').value = data.ecole;
+      if (data.promotion)  document.getElementById('f_promotion').value = data.promotion;
+      if (data.experience) document.getElementById('f_experience').value = data.experience;
+
+      if (data.diplome) {
+        const sel = document.getElementById('f_diplome');
+        for (let opt of sel.options) {
+          if (opt.value.toLowerCase().includes(data.diplome.toLowerCase())) {
+            sel.value = opt.value; break;
+          }
+        }
+      }
+
+      // Transférer le fichier vers le formulaire principal
+      const dt = new DataTransfer();
+      dt.items.add(file);
+      cvFileForm.files = dt.files;
+
+      zone.innerHTML += `<br><small class="text-success fw-bold"><i class="fas fa-magic me-1"></i>Informations extraites automatiquement !</small>`;
+    })
+    .catch(() => {
+      document.getElementById('uploadStatus').style.display = 'none';
+      zone.innerHTML += `<br><small class="text-warning">Extraction partielle — veuillez compléter manuellement.</small>`;
+    });
+}
+</script>
+{% endblock %}
