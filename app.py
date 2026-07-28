@@ -36,6 +36,7 @@ app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{os.path.join(BASE_DIR, 'rec
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["UPLOAD_FOLDER"] = os.path.join(BASE_DIR, "static", "uploads")
 app.config["MAX_CONTENT_LENGTH"] = 10 * 1024 * 1024  # 10 MB
+os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 
 db = SQLAlchemy(app)
 
