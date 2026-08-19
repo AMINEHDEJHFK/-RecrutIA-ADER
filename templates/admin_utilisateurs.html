@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+{% block title %}Gestion des utilisateurs — RecrutIA{% endblock %}
+
+{% block content %}
+<div style="background:var(--fond);border-bottom:1px solid var(--gris-clair);padding:16px 0;margin-bottom:28px;">
+  <div class="container-xl px-4">
+    <div class="section-label"><i class="fas fa-users-cog me-1"></i>Administration</div>
+    <div class="d-flex justify-content-between align-items-center">
+      <h2 class="fw-bold mb-0" style="color:var(--vert);font-size:1.3rem;">Gestion des comptes RH</h2>
+      <a href="{{ url_for('nouvel_utilisateur') }}" class="btn-or" style="border-radius:3px;padding:8px 20px;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:8px;">
+        <i class="fas fa-user-plus"></i>Nouveau compte
+      </a>
+    </div>
+  </div>
+</div>
+
+<div class="container-xl px-4 pb-5">
+
+  <div class="card">
+    <div class="card-header-ader">
+      <h5 class="mb-0"><i class="fas fa-users me-2"></i>{{ users|length }} compte(s) enregistré(s)</h5>
+    </div>
+    <div class="card-body p-0">
+      <table class="table table-hover align-middle mb-0">
+        <thead>
+          <tr>
+            <th>Utilisateur</th>
+            <th>Identifiant</th>
+            <th>Rôle</th>
+            <th>Statut</th>
+            <th>Créé le</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for u in users %}
+          <tr>
+            <td>
+              <div class="fw-bold">{{ u.prenom }} {{ u.nom }}</div>
+            </td>
+            <td>
+              <code style="background:var(--fond);padding:3px 8px;border-radius:3px;font-size:.82rem;">{{ u.username }}</code>
+            </td>
+            <td>
+              {% if u.role == 'admin' %}
+                <span style="background:#FEF0E6;color:var(--orange);border-radius:3px;padding:3px 10px;font-size:.75rem;font-weight:700;">
+                  <i class="fas fa-crown me-1"></i>Admin
+                </span>
+              {% elif u.role == 'jury' %}
+                <span style="background:#EEF3FF;color:#3730A3;border-radius:3px;padding:3px 10px;font-size:.75rem;font-weight:700;">
+                  <i class="fas fa-gavel me-1"></i>Jury
+                </span>
+              {% else %}
+                <span style="background:#E8F5EE;color:var(--vert);border-radius:3px;padding:3px 10px;font-size:.75rem;font-weight:700;">
+                  <i class="fas fa-user-tie me-1"></i>RH
+                </span>
+              {% endif %}
+            </td>
+            <td>
+              {% if u.actif %}
+                <span style="background:#E8F5EE;color:#0D5724;border-radius:3px;padding:3px 10px;font-size:.75rem;font-weight:700;">
+                  <i class="fas fa-circle me-1" style="font-size:.5rem;vertical-align:middle;"></i>Actif
+                </span>
+              {% else %}
+                <span style="background:#F3F4F6;color:#6B7280;border-radius:3px;padding:3px 10px;font-size:.75rem;font-weight:700;">
+                  <i class="fas fa-circle me-1" style="font-size:.5rem;vertical-align:middle;"></i>Désactivé
+                </span>
+              {% endif %}
+            </td>
+            <td><small class="text-muted">{{ u.date_creation.strftime('%d/%m/%Y') }}</small></td>
+            <td>
+              <div class="d-flex gap-2 flex-wrap">
+
+                <!-- Activer / Désactiver -->
+                {% if u.username != 'admin' %}
+                <form method="POST" action="{{ url_for('toggle_utilisateur', user_id=u.id) }}"
+                      onsubmit="return confirm('{{ 'Désactiver' if u.actif else 'Activer' }} le compte {{ u.username }} ?')">
+                  <button type="submit" class="btn btn-sm"
+                          style="{% if u.actif %}background:#FEF0E6;color:var(--orange);border:1px solid var(--orange);{% else %}background:#E8F5EE;color:var(--vert);border:1px solid var(--vert);{% endif %}font-size:.75rem;">
+                    <i class="fas fa-{% if u.actif %}ban{% else %}check{% endif %} me-1"></i>
+                    {{ 'Désactiver' if u.actif else 'Activer' }}
+                  </button>
+                </form>
+                {% endif %}
+
+                <!-- Reset mot de passe -->
+                <button type="button" class="btn btn-sm btn-outline-secondary"
+                        style="font-size:.75rem;"
+                        data-bs-toggle="modal" data-bs-target="#mdpModal{{ u.id }}">
+                  <i class="fas fa-key me-1"></i>Reset MDP
+                </button>
+              </div>
+
+              <!-- Modal reset MDP -->
+              <div class="modal fade" id="mdpModal{{ u.id }}" tabindex="-1">
+                <div class="modal-dialog modal-sm">
+                  <div class="modal-content">
+                    <div class="modal-header" style="background:var(--vert);color:#fff;">
+                      <h6 class="modal-title mb-0"><i class="fas fa-key me-1"></i>Reset MDP — {{ u.username }}</h6>
+                      <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <form method="POST" action="{{ url_for('reset_mdp', user_id=u.id) }}">
+                      <div class="modal-body">
+                        <label class="form-label fw-semibold" style="font-size:.82rem;" for="f_new_password">Nouveau mot de passe</label>
+                        <input id="f_new_password" type="password" name="new_password" class="form-control"
+                               placeholder="Min. 6 caractères" required minlength="6">
+                      </div>
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
+                        <button type="submit" class="btn-ader" style="border-radius:3px;padding:6px 16px;font-size:.82rem;">Confirmer</button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              </div>
+
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="mt-3">
+    <div class="alert alert-info py-2" style="font-size:.82rem;">
+      <i class="fas fa-info-circle me-1"></i>
+      <strong>Rôles :</strong>
+      <strong>Admin</strong> — accès complet + gestion des comptes &nbsp;|&nbsp;
+      <strong>RH</strong> — accès complet sauf gestion des comptes &nbsp;|&nbsp;
+      <strong>Jury</strong> — accès aux formulaires d'évaluation uniquement
+    </div>
+  </div>
+
+</div>
+{% endblock %}

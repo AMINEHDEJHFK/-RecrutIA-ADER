@@ -3,5 +3,9 @@ __pycache__/
 *.pkl
 recrut.db
 static/uploads/
+static/cv_tests/
+data/cvs_test_email/
+*.log
 .env
 venv/
+flask_out.txt

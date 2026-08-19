@@ -1,0 +1,285 @@
+{% extends "base.html" %}
+{% block title %}Entretien jury — {{ candidat.prenom }} {{ candidat.nom }}{% endblock %}
+
+{% block extra_css %}
+<style>
+  .jury-card {
+    border: 2px solid var(--gris-clair);
+    border-radius: 6px;
+    padding: 20px;
+    height: 100%;
+    transition: border-color .15s, box-shadow .15s;
+    background: #fff;
+    position: relative;
+  }
+  .jury-card.done   { border-color: var(--vert); }
+  .jury-card.pending { border-color: var(--gris-clair); }
+
+  .jury-num {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 1rem;
+    margin-bottom: 12px;
+  }
+  .jury-num.done    { background: var(--vert); color: #fff; }
+  .jury-num.pending { background: var(--gris-clair); color: var(--gris-moyen); }
+
+  .criteria-mini {
+    display: flex; flex-direction: column; gap: 5px; margin: 10px 0;
+  }
+  .criteria-mini-row {
+    display: flex; align-items: center; gap: 8px; font-size: .76rem;
+  }
+  .criteria-mini-label { width: 90px; color: var(--gris-moyen); }
+  .criteria-mini-bar { flex: 1; height: 5px; background: var(--gris-clair); border-radius: 3px; overflow: hidden; }
+  .criteria-mini-fill { height: 100%; background: var(--vert); border-radius: 3px; }
+  .criteria-mini-val  { width: 32px; text-align: right; font-weight: 700; color: var(--noir); }
+
+  .score-bubble {
+    width: 70px; height: 70px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    flex-direction: column;
+    font-weight: 900;
+    font-size: 1.3rem;
+    line-height: 1;
+    margin: 0 auto 8px;
+  }
+  .score-bubble.good { background: #E8F5EE; color: var(--vert); }
+  .score-bubble.bad  { background: #FEECEC; color: #DC2626; }
+  .score-bubble.mid  { background: #FEF3E6; color: #B45309; }
+  .score-bubble.pending { background: var(--fond); color: var(--gris-moyen); }
+
+  .step-line {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 24px;
+  }
+  .step-dot {
+    width: 28px; height: 28px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: .75rem; font-weight: 800; flex-shrink: 0;
+  }
+  .step-dot.done    { background: var(--vert); color: #fff; }
+  .step-dot.active  { background: var(--orange); color: #fff; }
+  .step-dot.pending { background: var(--gris-clair); color: var(--gris-moyen); }
+  .step-connector { flex: 1; height: 2px; background: var(--gris-clair); }
+  .step-connector.done { background: var(--vert); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="background:var(--fond);border-bottom:1px solid var(--gris-clair);padding:16px 0;margin-bottom:28px;">
+  <div class="container-xl px-4">
+    <nav class="mb-1">
+      <small>
+        <a href="{{ url_for('detail_candidat', candidat_id=candidat.id) }}" style="color:var(--vert);">
+          {{ candidat.prenom }} {{ candidat.nom }}
+        </a> / Entretien jury
+      </small>
+    </nav>
+    <div class="section-label"><i class="fas fa-users me-1"></i>Étape 2 sur 2</div>
+    <h2 class="fw-bold mb-0" style="color:var(--vert);font-size:1.3rem;">Évaluation par les 4 membres du jury</h2>
+    <small class="text-muted">Chaque membre du jury évalue le candidat indépendamment — le score final est la moyenne des 4 notes</small>
+  </div>
+</div>
+
+<div class="container-xl px-4 pb-5">
+
+  <!-- Barre de progression -->
+  <div class="card mb-4 p-3">
+    <div class="d-flex align-items-center gap-3">
+      <!-- Vérification dossier -->
+      <div style="text-align:center;min-width:60px;">
+        <div class="step-dot {% if candidat.verification %}done{% else %}pending{% endif %}" style="margin:0 auto 4px;">
+          {% if candidat.verification %}<i class="fas fa-check" style="font-size:.7rem;"></i>{% else %}1{% endif %}
+        </div>
+        <div style="font-size:.68rem;color:var(--gris-moyen);">Dossier</div>
+      </div>
+      <div class="step-connector {% if candidat.verification %}done{% endif %}"></div>
+
+      {% for i in range4 %}
+      <div style="text-align:center;min-width:50px;">
+        <div class="step-dot {% if evals[i] %}done{% elif loop.first and not evals[1] %}active{% else %}pending{% endif %}"
+             style="margin:0 auto 4px;">
+          {% if evals[i] %}<i class="fas fa-check" style="font-size:.7rem;"></i>{% else %}{{ i }}{% endif %}
+        </div>
+        <div style="font-size:.68rem;color:var(--gris-moyen);">Jury {{ i }}</div>
+      </div>
+      {% if not loop.last %}
+      <div class="step-connector {% if evals[i] %}done{% endif %}"></div>
+      {% endif %}
+      {% endfor %}
+
+      <div class="step-connector {% if score_moyen is not none %}done{% endif %}"></div>
+      <div style="text-align:center;min-width:60px;">
+        <div class="step-dot {% if score_moyen is not none %}done{% else %}pending{% endif %}" style="margin:0 auto 4px;">
+          {% if score_moyen is not none %}<i class="fas fa-check" style="font-size:.7rem;"></i>{% else %}<i class="fas fa-trophy" style="font-size:.7rem;"></i>{% endif %}
+        </div>
+        <div style="font-size:.68rem;color:var(--gris-moyen);">Résultat</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Alerte conformité dossier -->
+  {% if candidat.verification and not candidat.verification.conforme %}
+  <div class="alert alert-warning py-2 mb-4">
+    <i class="fas fa-exclamation-triangle me-1"></i>
+    <strong>Dossier non conforme</strong> — Le candidat passera quand même l'entretien,
+    mais sera éliminé en fin de processus (motif archivé en interne).
+  </div>
+  {% endif %}
+
+  <!-- Score moyen final (si tous les jurys ont évalué) -->
+  {% if score_moyen is not none %}
+  <div class="card mb-4" style="border-left:4px solid {% if candidat.entretien and candidat.entretien.decision_entretien == 'Retenu' %}var(--vert){% else %}#DC2626{% endif %};">
+    <div class="card-body p-4">
+      <div class="row align-items-center">
+        <div class="col-md-4 text-center">
+          <div style="font-size:3rem;font-weight:900;color:{% if score_moyen >= 12 %}var(--vert){% elif score_moyen >= 10 %}var(--orange){% else %}#DC2626{% endif %};">
+            {{ score_moyen }}<span style="font-size:1.2rem;">/20</span>
+          </div>
+          <div class="text-muted small">Moyenne des 4 jurys</div>
+        </div>
+        <div class="col-md-8">
+          <h5 class="fw-bold mb-1">Résultat final de l'entretien</h5>
+          {% if candidat.entretien %}
+          <div class="mb-2">
+            {% if candidat.entretien.decision_entretien == "Retenu" %}
+              <span class="badge bg-success fs-6"><i class="fas fa-check me-1"></i>Retenu</span>
+            {% else %}
+              <span class="badge bg-danger fs-6"><i class="fas fa-times me-1"></i>Éliminé</span>
+            {% endif %}
+          </div>
+          {% endif %}
+          {% if candidat.verification and not candidat.verification.conforme %}
+            <div class="text-muted small"><i class="fas fa-info-circle me-1"></i>Éliminé automatiquement (dossier non conforme)</div>
+          {% elif score_moyen < 10 %}
+            <div class="text-muted small"><i class="fas fa-info-circle me-1"></i>Éliminé — score inférieur à 10/20</div>
+          {% else %}
+            {% set score_ia = (candidat.score_ia * 100)|round(1) %}
+            {% set score_final = (score_ia * 0.4 + (score_moyen / 20 * 100) * 0.6)|round(1) %}
+            <div class="text-muted small">
+              Score final : <strong>{{ score_final }}%</strong>
+              (40% IA : {{ score_ia }}% + 60% entretien : {{ (score_moyen/20*100)|round(1) }}%)
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+  {% else %}
+  <div class="alert alert-info py-2 mb-4">
+    <i class="fas fa-clock me-1"></i>
+    <strong>{{ evals|length }}/4 jury(s) ont évalué.</strong>
+    Le résultat sera calculé automatiquement quand les 4 jurys auront soumis leur évaluation.
+  </div>
+  {% endif %}
+
+  <!-- 4 Fiches jury -->
+  <div class="row g-3">
+    {% for i in range4 %}
+    {% set ev = evals.get(i) %}
+    <div class="col-md-6 col-xl-3">
+      <div class="jury-card {% if ev %}done{% else %}pending{% endif %}">
+
+        <div class="d-flex align-items-center gap-2 mb-3">
+          <div class="jury-num {% if ev %}done{% else %}pending{% endif %}">
+            {% if ev %}<i class="fas fa-check" style="font-size:.8rem;"></i>{% else %}{{ i }}{% endif %}
+          </div>
+          <div>
+            <div class="fw-bold" style="font-size:.9rem;">Jury {{ i }}</div>
+            {% if ev %}
+              <div style="font-size:.72rem;color:var(--gris-moyen);">{{ ev.nom_jury }}</div>
+              <div style="font-size:.7rem;color:var(--gris-moyen);">{{ ev.poste_jury }}</div>
+            {% else %}
+              <div style="font-size:.72rem;color:var(--gris-moyen);">En attente</div>
+            {% endif %}
+          </div>
+        </div>
+
+        {% if ev %}
+          <!-- Score bulle -->
+          <div class="score-bubble {% if ev.score_jury >= 12 %}good{% elif ev.score_jury >= 10 %}mid{% else %}bad{% endif %}">
+            {{ ev.score_jury }}
+            <span style="font-size:.6rem;font-weight:600;">/20</span>
+          </div>
+          <div class="text-center text-muted small mb-3">Score jury {{ i }}</div>
+
+          <!-- Critères mini -->
+          <div class="criteria-mini">
+            {% for label, val in [
+              ('Présentation', ev.note_presentation),
+              ('Motivation',   ev.note_motivation),
+              ('Compétences',  ev.note_competences),
+              ('Comm.',        ev.note_communication),
+              ('Culture',      ev.note_culture),
+            ] %}
+            <div class="criteria-mini-row">
+              <div class="criteria-mini-label">{{ label }}</div>
+              <div class="criteria-mini-bar">
+                <div class="criteria-mini-fill" style="width:{{ (val/20*100)|int }}%;"></div>
+              </div>
+              <div class="criteria-mini-val">{{ val }}/20</div>
+            </div>
+            {% endfor %}
+          </div>
+
+          {% if ev.commentaire %}
+          <div style="font-size:.72rem;color:var(--gris-moyen);margin-top:8px;font-style:italic;border-top:1px solid var(--gris-clair);padding-top:8px;">
+            "{{ ev.commentaire[:80] }}{% if ev.commentaire|length > 80 %}…{% endif %}"
+          </div>
+          {% endif %}
+
+          <div class="mt-3">
+            <a href="{{ url_for('jury_form', candidat_id=candidat.id, num=i) }}"
+               class="btn btn-sm w-100" style="background:var(--vert-pale);color:var(--vert);font-size:.78rem;font-weight:600;">
+              <i class="fas fa-edit me-1"></i>Modifier
+            </a>
+          </div>
+
+        {% else %}
+          <!-- Pas encore évalué -->
+          <div class="score-bubble pending">
+            <i class="fas fa-hourglass" style="font-size:1.2rem;"></i>
+          </div>
+          <div class="text-center text-muted small mb-3">Non évalué</div>
+
+          <div class="criteria-mini">
+            {% for label in ['Présentation','Motivation','Compétences','Comm.','Culture'] %}
+            <div class="criteria-mini-row">
+              <div class="criteria-mini-label">{{ label }}</div>
+              <div class="criteria-mini-bar"><div class="criteria-mini-fill" style="width:0;"></div></div>
+              <div class="criteria-mini-val" style="color:var(--gris-clair);">—</div>
+            </div>
+            {% endfor %}
+          </div>
+
+          <div class="mt-3">
+            <a href="{{ url_for('jury_form', candidat_id=candidat.id, num=i) }}"
+               class="btn-or w-100 text-center text-decoration-none d-block"
+               style="border-radius:3px;padding:8px;font-size:.82rem;font-weight:700;">
+              <i class="fas fa-pen me-1"></i>Évaluer (Jury {{ i }})
+            </a>
+          </div>
+        {% endif %}
+
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Actions -->
+  <div class="d-flex gap-2 mt-4">
+    <a href="{{ url_for('detail_candidat', candidat_id=candidat.id) }}" class="btn btn-outline-secondary">
+      <i class="fas fa-arrow-left me-1"></i>Fiche candidat
+    </a>
+    {% if candidat.offre %}
+    <a href="{{ url_for('classement_offre', offre_id=candidat.offre_id) }}" class="btn-ader"
+       style="border-radius:3px;padding:8px 18px;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:6px;">
+      <i class="fas fa-trophy"></i>Classement final
+    </a>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

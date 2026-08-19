@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+{% block title %}Dossiers non conformes — {{ offre.titre }}{% endblock %}
+
+{% block content %}
+<div style="background:var(--fond);border-bottom:1px solid var(--gris-clair);padding:16px 0;margin-bottom:28px;">
+  <div class="container-xl px-4">
+    <nav class="mb-1">
+      <small>
+        <a href="{{ url_for('offres') }}" style="color:var(--vert);">Offres</a> /
+        <a href="{{ url_for('detail_offre', offre_id=offre.id) }}" style="color:var(--vert);">{{ offre.titre }}</a> /
+        Dossiers non conformes
+      </small>
+    </nav>
+    <div class="section-label" style="color:#DC2626;"><i class="fas fa-lock me-1"></i>Usage interne uniquement</div>
+    <h2 class="fw-bold mb-0" style="color:#DC2626;font-size:1.3rem;">
+      Dossiers non conformes — Archive interne
+    </h2>
+    <small class="text-muted">Ces motifs sont confidentiels et ne sont jamais transmis automatiquement aux candidats</small>
+  </div>
+</div>
+
+<div class="container-xl px-4 pb-5">
+
+  <div class="alert" style="background:#FEF3E6;border-left:4px solid var(--orange);border-radius:3px;font-size:.85rem;">
+    <i class="fas fa-shield-alt me-1" style="color:var(--orange);"></i>
+    <strong>Confidentialité :</strong> Cette liste est réservée au service RH.
+    Un email générique (sans motif) peut être envoyé <strong>uniquement sur demande du candidat</strong>.
+  </div>
+
+  {% if candidats %}
+  <div class="card">
+    <div class="card-header-ader d-flex justify-content-between align-items-center">
+      <h5 class="mb-0">
+        <i class="fas fa-exclamation-triangle me-2"></i>{{ candidats|length }} dossier(s) non conforme(s)
+      </h5>
+      <small style="color:rgba(255,255,255,.7);">{{ offre.titre }}</small>
+    </div>
+    <div class="card-body p-0">
+      <table class="table table-hover align-middle mb-0">
+        <thead>
+          <tr>
+            <th>Candidat</th>
+            <th>Score IA</th>
+            <th>Score entretien</th>
+            <th>Motif interne (confidentiel)</th>
+            <th>Date vérification</th>
+            <th>Email envoyé</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for c in candidats %}
+          <tr>
+            <td>
+              <div class="fw-bold">{{ c.prenom }} {{ c.nom }}</div>
+              <small class="text-muted">{{ c.email }}</small>
+            </td>
+            <td>
+              <span style="background:#EEF3FF;color:#3730A3;border-radius:3px;padding:3px 8px;font-size:.78rem;font-weight:700;">
+                {{ (c.score_ia*100)|round(1) }}%
+              </span>
+            </td>
+            <td>
+              {% if c.entretien %}
+                <span style="font-size:.82rem;font-weight:700;color:var(--gris-fonce);">
+                  {{ c.entretien.score_entretien }}/20
+                </span>
+              {% else %}
+                <span class="text-muted small">—</span>
+              {% endif %}
+            </td>
+            <td>
+              <div style="background:#FEF0E6;border-left:3px solid var(--orange);padding:6px 10px;border-radius:0 3px 3px 0;font-size:.8rem;max-width:280px;">
+                <i class="fas fa-eye-slash me-1" style="color:var(--orange);"></i>
+                {{ c.verification.motif_interne or '—' }}
+              </div>
+              <div style="font-size:.7rem;color:var(--gris-moyen);margin-top:4px;">
+                {% if not c.verification.diplome_conforme %}<span class="me-2">❌ Diplôme</span>{% endif %}
+                {% if not c.verification.experience_conforme %}<span class="me-2">❌ Expérience</span>{% endif %}
+                {% if not c.verification.cin_conforme %}<span class="me-2">❌ CIN</span>{% endif %}
+                {% if not c.verification.autres_conformes %}<span class="me-2">❌ Autres docs</span>{% endif %}
+              </div>
+            </td>
+            <td>
+              <small class="text-muted">
+                {{ c.verification.date_verification.strftime('%d/%m/%Y %H:%M') if c.verification.date_verification else '—' }}
+              </small>
+              {% if c.verification.verificateur %}
+              <div style="font-size:.7rem;color:var(--gris-moyen);">par {{ c.verification.verificateur }}</div>
+              {% endif %}
+            </td>
+            <td class="text-center">
+              {% if c.verification.email_envoye %}
+                <span style="background:#E8F5EE;color:#0D5724;border-radius:3px;padding:3px 8px;font-size:.72rem;font-weight:700;">
+                  <i class="fas fa-check me-1"></i>Envoyé
+                </span>
+              {% else %}
+                <span style="background:#F3F4F6;color:#6B7280;border-radius:3px;padding:3px 8px;font-size:.72rem;font-weight:600;">
+                  Non envoyé
+                </span>
+              {% endif %}
+            </td>
+            <td>
+              <div class="d-flex gap-1 flex-wrap">
+                <a href="{{ url_for('detail_candidat', candidat_id=c.id) }}"
+                   class="btn btn-sm btn-ader" title="Voir fiche">
+                  <i class="fas fa-eye"></i>
+                </a>
+                {% if not c.verification.email_envoye %}
+                <form method="POST" action="{{ url_for('envoyer_email_non_conforme', candidat_id=c.id) }}"
+                      onsubmit="return confirm('Envoyer un email de non-sélection à {{ c.email }} ?\n\nL\'email ne mentionnera PAS le motif réel.')">
+                  <button type="submit" class="btn btn-sm"
+                          style="background:#FEF0E6;color:var(--orange);border:1px solid var(--orange);font-size:.75rem;"
+                          title="Envoyer email (sur demande du candidat uniquement)">
+                    <i class="fas fa-envelope me-1"></i>Envoyer sur demande
+                  </button>
+                </form>
+                {% else %}
+                <button class="btn btn-sm btn-outline-secondary" disabled title="Email déjà envoyé">
+                  <i class="fas fa-envelope-open"></i>
+                </button>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  {% else %}
+  <div class="text-center py-5">
+    <div style="width:64px;height:64px;background:#E8F5EE;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;">
+      <i class="fas fa-check-double fa-2x" style="color:var(--vert);"></i>
+    </div>
+    <h5 class="fw-bold text-muted">Aucun dossier non conforme</h5>
+    <p class="text-muted small">Tous les candidats présélectionnés ont apporté des documents conformes à leur déclaration.</p>
+  </div>
+  {% endif %}
+
+  <div class="mt-3">
+    <a href="{{ url_for('detail_offre', offre_id=offre.id) }}" class="btn btn-outline-secondary">
+      <i class="fas fa-arrow-left me-1"></i>Retour à l'offre
+    </a>
+  </div>
+
+</div>
+{% endblock %}

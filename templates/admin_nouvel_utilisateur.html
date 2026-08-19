@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block title %}Nouveau compte RH — RecrutIA{% endblock %}
+
+{% block content %}
+<div style="background:var(--fond);border-bottom:1px solid var(--gris-clair);padding:16px 0;margin-bottom:28px;">
+  <div class="container-xl px-4">
+    <nav class="mb-1">
+      <small>
+        <a href="{{ url_for('gestion_utilisateurs') }}" style="color:var(--vert);">Utilisateurs</a> / Nouveau compte
+      </small>
+    </nav>
+    <div class="section-label"><i class="fas fa-user-plus me-1"></i>Administration</div>
+    <h2 class="fw-bold mb-0" style="color:var(--vert);font-size:1.3rem;">Créer un compte RH</h2>
+  </div>
+</div>
+
+<div class="container-xl px-4 pb-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-6">
+      <div class="card">
+        <div class="card-header-ader">
+          <h5 class="mb-0"><i class="fas fa-user-plus me-2"></i>Informations du compte</h5>
+        </div>
+        <div class="card-body p-4">
+          <form method="POST">
+
+            <div class="row g-3 mb-3">
+              <div class="col-md-6">
+                <label class="form-label fw-semibold" style="font-size:.82rem;" for="f_prenom">Prénom <span class="text-danger">*</span></label>
+                <input id="f_prenom" type="text" name="prenom" class="form-control" placeholder="Ex: Hassan" required>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold" style="font-size:.82rem;" for="f_nom">Nom <span class="text-danger">*</span></label>
+                <input id="f_nom" type="text" name="nom" class="form-control" placeholder="Ex: ALAOUI" required>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-semibold" style="font-size:.82rem;" for="f_username">Identifiant (login) <span class="text-danger">*</span></label>
+              <input id="f_username" type="text" name="username" class="form-control"
+                     placeholder="Ex: h.alaoui" required
+                     pattern="[a-zA-Z0-9._-]+" title="Lettres, chiffres, point, tiret uniquement">
+              <div class="form-text">Utilisé pour se connecter. Sans espaces ni accents.</div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-semibold" style="font-size:.82rem;" for="f_role">Mot de passe <span class="text-danger">*</span></label>
+              <div class="input-group">
+                <input type="password" name="password" id="password" class="form-control"
+                       placeholder="Min. 6 caractères" required minlength="6">
+                <button type="button" class="btn btn-outline-secondary"
+                        onclick="toggleMdp()">
+                  <i class="fas fa-eye" id="eye-icon"></i>
+                </button>
+              </div>
+            </div>
+
+            <div class="mb-4">
+              <label class="form-label fw-semibold" style="font-size:.82rem;" for="f_role">Rôle <span class="text-danger">*</span></label>
+              <select id="f_role" name="role" class="form-select">
+                <option value="rh">RH — Accès complet</option>
+                <option value="jury">Jury — Évaluations uniquement</option>
+                <option value="admin">Admin — Accès complet + gestion comptes</option>
+              </select>
+            </div>
+
+            <div class="d-flex gap-2">
+              <button type="submit" class="btn-ader"
+                      style="border-radius:3px;padding:10px 24px;font-weight:700;display:inline-flex;align-items:center;gap:8px;">
+                <i class="fas fa-save"></i>Créer le compte
+              </button>
+              <a href="{{ url_for('gestion_utilisateurs') }}" class="btn btn-outline-secondary">Annuler</a>
+            </div>
+
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function toggleMdp() {
+  const inp = document.getElementById('password');
+  const ico = document.getElementById('eye-icon');
+  if (inp.type === 'password') {
+    inp.type = 'text';
+    ico.className = 'fas fa-eye-slash';
+  } else {
+    inp.type = 'password';
+    ico.className = 'fas fa-eye';
+  }
+}
+</script>
+{% endblock %}

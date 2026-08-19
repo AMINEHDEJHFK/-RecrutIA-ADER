@@ -2,45 +2,188 @@
 {% block title %}Dashboard RH - RecrutIA{% endblock %}
 
 {% block content %}
-<div class="container-fluid my-4 px-4">
-
-  <!-- En-tête -->
-  <div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-      <h3 class="fw-bold mb-0" style="color:var(--ader-bleu);">
-        <i class="fas fa-chart-bar me-2"></i>Dashboard RH
-      </h3>
-      <small class="text-muted">Suivi des candidatures — ADER Fès</small>
+<div style="background:var(--fond);border-bottom:1px solid var(--gris-clair);padding:18px 0;margin-bottom:28px;">
+  <div class="container-xl px-4">
+    <div class="d-flex justify-content-between align-items-center">
+      <div>
+        <div class="section-label"><i class="fas fa-chart-bar me-1"></i>Suivi</div>
+        <h2 class="fw-bold mb-0" style="color:var(--vert);font-size:1.4rem;">Dashboard RH</h2>
+        <small class="text-muted">Suivi des candidatures — ADER Fès</small>
+      </div>
+      <a href="{{ url_for('export_excel') }}" class="btn-or" style="border-radius:3px;padding:10px 22px;font-weight:700;font-size:.85rem;text-decoration:none;display:inline-flex;align-items:center;gap:8px;">
+        <i class="fas fa-file-excel"></i>Exporter Excel
+      </a>
     </div>
-    <a href="/candidature" class="btn btn-or">
-      <i class="fas fa-plus me-1"></i>Nouvelle candidature
-    </a>
   </div>
+</div>
+
+<div class="container-xl px-4">
 
   <!-- STATS -->
   <div class="row g-3 mb-4">
     <div class="col-md-3">
-      <div class="card text-center p-3">
-        <div style="font-size:2rem; font-weight:800; color:var(--ader-bleu);">{{ stats.total }}</div>
-        <div class="text-muted">Total candidatures</div>
+      <div class="stat-card text-center">
+        <div class="stat-number">{{ stats.total }}</div>
+        <div class="stat-label">Total candidatures</div>
       </div>
     </div>
     <div class="col-md-3">
-      <div class="card text-center p-3">
-        <div style="font-size:2rem; font-weight:800; color:#198754;">{{ stats.preselectionnes }}</div>
-        <div class="text-muted">Présélectionnés</div>
+      <div class="stat-card text-center">
+        <div class="stat-number">{{ stats.preselectionnes }}</div>
+        <div class="stat-label">Présélectionnés</div>
       </div>
     </div>
     <div class="col-md-3">
-      <div class="card text-center p-3">
-        <div style="font-size:2rem; font-weight:800; color:#dc3545;">{{ stats.non_retenus }}</div>
-        <div class="text-muted">Non retenus</div>
+      <div class="stat-card rouge text-center">
+        <div class="stat-number rouge">{{ stats.non_retenus }}</div>
+        <div class="stat-label">Non retenus</div>
       </div>
     </div>
     <div class="col-md-3">
-      <div class="card text-center p-3">
-        <div style="font-size:2rem; font-weight:800; color:var(--ader-or);">{{ stats.taux }}%</div>
-        <div class="text-muted">Taux de présélection</div>
+      <div class="stat-card orange text-center">
+        <div class="stat-number orange">{{ stats.taux }}%</div>
+        <div class="stat-label">Taux de présélection</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Graphiques Avancés -->
+  <style>
+    .chart-card {
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 4px 24px rgba(26,58,92,.08);
+      padding: 22px;
+      transition: transform .2s, box-shadow .2s;
+      position: relative;
+      overflow: hidden;
+    }
+    .chart-card:hover { transform: translateY(-3px); box-shadow: 0 8px 32px rgba(26,58,92,.14); }
+    .chart-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 4px;
+      background: var(--stripe, #0D5724);
+      border-radius: 16px 16px 0 0;
+    }
+    .chart-label {
+      font-size: .7rem;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: #94A3B8;
+      margin-bottom: 2px;
+    }
+    .chart-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #0D5724;
+    }
+    .chart-icon {
+      width: 38px; height: 38px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem; flex-shrink: 0;
+    }
+    .score-bar-wrap { display: flex; flex-direction: column; gap: 10px; }
+    .score-bar-row { display: flex; align-items: center; gap: 10px; font-size: .85rem; }
+    .score-bar-track {
+      flex: 1; height: 10px; border-radius: 99px;
+      background: #F0F4F8; overflow: hidden;
+    }
+    .score-bar-fill {
+      height: 100%; border-radius: 99px;
+      transition: width 1.2s cubic-bezier(.4,0,.2,1);
+    }
+    .score-bar-label { width: 100px; color: #64748B; font-weight: 500; }
+    .score-bar-val { width: 32px; text-align: right; font-weight: 700; color: #0D5724; }
+    @keyframes fadeUp { from { opacity:0; transform:translateY(18px); } to { opacity:1; transform:translateY(0); } }
+    .chart-card { animation: fadeUp .5s ease both; }
+    .chart-card:nth-child(1) { animation-delay: .05s; }
+    .chart-card:nth-child(2) { animation-delay: .12s; }
+    .chart-card:nth-child(3) { animation-delay: .19s; }
+    .chart-card:nth-child(4) { animation-delay: .26s; }
+  </style>
+
+  <div class="row g-3 mb-4">
+    <!-- Donut Décisions -->
+    <div class="col-lg-3 col-md-6">
+      <div class="chart-card h-100" style="--stripe:#0D5724;">
+        <div class="d-flex align-items-start gap-3 mb-3">
+          <div class="chart-icon" style="background:#EEF3F8;">
+            <i class="fas fa-brain" style="color:#0D5724;"></i>
+          </div>
+          <div>
+            <div class="chart-label">Résultats IA</div>
+            <div class="chart-title">Présélection</div>
+          </div>
+        </div>
+        <div style="position:relative;max-width:200px;margin:0 auto;">
+          <canvas id="chartDecision"></canvas>
+          <div id="donutCenter" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:none;">
+            <div id="donutPct" style="font-size:1.8rem;font-weight:800;color:#0D5724;line-height:1;">0%</div>
+            <div style="font-size:.65rem;color:#94A3B8;font-weight:600;letter-spacing:.06em;text-transform:uppercase;">taux</div>
+          </div>
+        </div>
+        <div class="d-flex justify-content-around mt-3">
+          <div class="text-center">
+            <div style="font-size:1.25rem;font-weight:800;color:#10B981;">{{ stats.preselectionnes }}</div>
+            <div style="font-size:.7rem;color:#94A3B8;font-weight:600;">Présélectionnés</div>
+          </div>
+          <div style="width:1px;background:#F0F4F8;"></div>
+          <div class="text-center">
+            <div style="font-size:1.25rem;font-weight:800;color:#EF4444;">{{ stats.non_retenus }}</div>
+            <div style="font-size:.7rem;color:#94A3B8;font-weight:600;">Non retenus</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Barres Diplômes -->
+    <div class="col-lg-3 col-md-6">
+      <div class="chart-card h-100" style="--stripe:#E66210;">
+        <div class="d-flex align-items-start gap-3 mb-3">
+          <div class="chart-icon" style="background:#FBF5E6;">
+            <i class="fas fa-graduation-cap" style="color:#E66210;"></i>
+          </div>
+          <div>
+            <div class="chart-label">Formation</div>
+            <div class="chart-title">Diplômes</div>
+          </div>
+        </div>
+        <div class="score-bar-wrap" id="diplomesBars"></div>
+      </div>
+    </div>
+
+    <!-- Polar Postes -->
+    <div class="col-lg-3 col-md-6">
+      <div class="chart-card h-100" style="--stripe:#6366F1;">
+        <div class="d-flex align-items-start gap-3 mb-3">
+          <div class="chart-icon" style="background:#EEEEFF;">
+            <i class="fas fa-briefcase" style="color:#6366F1;"></i>
+          </div>
+          <div>
+            <div class="chart-label">Recrutement</div>
+            <div class="chart-title">Postes</div>
+          </div>
+        </div>
+        <canvas id="chartPoste" height="220"></canvas>
+      </div>
+    </div>
+
+    <!-- Distribution scores -->
+    <div class="col-lg-3 col-md-6">
+      <div class="chart-card h-100" style="--stripe:#10B981;">
+        <div class="d-flex align-items-start gap-3 mb-3">
+          <div class="chart-icon" style="background:#ECFDF5;">
+            <i class="fas fa-chart-area" style="color:#10B981;"></i>
+          </div>
+          <div>
+            <div class="chart-label">Distribution</div>
+            <div class="chart-title">Scores IA</div>
+          </div>
+        </div>
+        <canvas id="chartScores" height="220"></canvas>
       </div>
     </div>
   </div>
@@ -77,7 +220,7 @@
         <table class="table table-hover mb-0" id="tableCandidat">
           <thead>
             <tr>
-              <th>#</th>
+              <th>ID</th>
               <th>Candidat</th>
               <th>Poste</th>
               <th>Diplôme</th>
@@ -143,11 +286,154 @@
     </div>
   </div>
 
-</div>
+</div><!-- /.container-xl -->
 {% endblock %}
 
 {% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
+// ── Données brutes ────────────────────────────────────────────
+const presel   = {{ stats.preselectionnes }};
+const nonRet   = {{ stats.non_retenus }};
+const total    = {{ stats.total }};
+const taux     = {{ stats.taux }};
+
+const diplomes = {};
+const postesMap = {};
+const scores   = [];
+{% for c in candidats %}
+  diplomes["{{ c.diplome }}"] = (diplomes["{{ c.diplome }}"] || 0) + 1;
+  postesMap["{{ c.poste }}"]  = (postesMap["{{ c.poste }}"]  || 0) + 1;
+  scores.push({{ (c.score_ia * 100) | round(1) }});
+{% endfor %}
+
+// ── 1. Donut Décisions ────────────────────────────────────────
+const ctxD = document.getElementById('chartDecision').getContext('2d');
+const gradGreen = ctxD.createLinearGradient(0,0,0,200);
+gradGreen.addColorStop(0,'#34D399'); gradGreen.addColorStop(1,'#059669');
+const gradRed = ctxD.createLinearGradient(0,0,0,200);
+gradRed.addColorStop(0,'#F87171'); gradRed.addColorStop(1,'#DC2626');
+
+new Chart(ctxD, {
+  type: 'doughnut',
+  data: {
+    labels: ['Présélectionnés','Non retenus'],
+    datasets: [{ data: [presel, nonRet],
+      backgroundColor: [gradGreen, gradRed],
+      borderWidth: 3, borderColor: '#fff', hoverOffset: 10
+    }]
+  },
+  options: {
+    cutout: '72%',
+    animation: { animateRotate: true, duration: 1200, easing: 'easeInOutQuart' },
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: '#0D5724',
+        titleFont: { size: 11 }, bodyFont: { size: 13, weight: 'bold' },
+        callbacks: { label: ctx => `  ${ctx.raw} candidat(s) — ${total ? Math.round(ctx.raw/total*100) : 0}%` }
+      }
+    }
+  }
+});
+
+// Animer le % dans le centre du donut
+let pct = 0;
+const target = taux;
+const timer = setInterval(() => {
+  pct = Math.min(pct + 2, target);
+  document.getElementById('donutPct').textContent = pct.toFixed(0) + '%';
+  if (pct >= target) clearInterval(timer);
+}, 20);
+
+// ── 2. Barres Diplômes (HTML animées) ────────────────────────
+const colors = ['#0D5724','#E66210','#6366F1','#10B981','#F59E0B'];
+const dWrap = document.getElementById('diplomesBars');
+const maxD = Math.max(...Object.values(diplomes), 1);
+Object.entries(diplomes).sort((a,b)=>b[1]-a[1]).forEach(([label, val], i) => {
+  const pct = Math.round(val / maxD * 100);
+  const color = colors[i % colors.length];
+  dWrap.innerHTML += `
+    <div class="score-bar-row">
+      <div class="score-bar-label" style="font-size:.78rem;">${label}</div>
+      <div class="score-bar-track">
+        <div class="score-bar-fill" data-w="${pct}" style="width:0%;background:${color};"></div>
+      </div>
+      <div class="score-bar-val">${val}</div>
+    </div>`;
+});
+setTimeout(() => {
+  document.querySelectorAll('.score-bar-fill').forEach(el => {
+    el.style.width = el.dataset.w + '%';
+  });
+}, 100);
+
+// ── 3. Polar Area Postes ──────────────────────────────────────
+new Chart(document.getElementById('chartPoste'), {
+  type: 'polarArea',
+  data: {
+    labels: Object.keys(postesMap),
+    datasets: [{
+      data: Object.values(postesMap),
+      backgroundColor: ['rgba(99,102,241,.75)','rgba(26,58,92,.75)','rgba(200,168,75,.75)','rgba(16,185,129,.75)'],
+      borderColor: '#fff', borderWidth: 2
+    }]
+  },
+  options: {
+    animation: { duration: 1000, easing: 'easeInOutQuart' },
+    plugins: {
+      legend: { position: 'bottom', labels: { font: { size: 11 }, padding: 12 } },
+      tooltip: { backgroundColor: '#0D5724' }
+    },
+    scales: { r: { ticks: { display: false }, grid: { color: 'rgba(0,0,0,.06)' } } }
+  }
+});
+
+// ── 4. Histogramme Distribution Scores ────────────────────────
+const buckets = ['0-20','20-40','40-60','60-80','80-100'];
+const counts  = [0,0,0,0,0];
+scores.forEach(s => {
+  if (s < 20) counts[0]++;
+  else if (s < 40) counts[1]++;
+  else if (s < 60) counts[2]++;
+  else if (s < 80) counts[3]++;
+  else counts[4]++;
+});
+const ctxS = document.getElementById('chartScores').getContext('2d');
+const gradScore = ctxS.createLinearGradient(0, 0, 0, 220);
+gradScore.addColorStop(0,'rgba(16,185,129,.9)');
+gradScore.addColorStop(1,'rgba(16,185,129,.2)');
+
+new Chart(ctxS, {
+  type: 'bar',
+  data: {
+    labels: buckets,
+    datasets: [{
+      label: 'Candidats',
+      data: counts,
+      backgroundColor: counts.map((_, i) =>
+        i < 2 ? 'rgba(239,68,68,.7)' : i === 2 ? 'rgba(245,158,11,.7)' : 'rgba(16,185,129,.8)'
+      ),
+      borderRadius: 8, borderSkipped: false,
+    }]
+  },
+  options: {
+    animation: { duration: 1100, easing: 'easeInOutQuart' },
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: '#0D5724',
+        callbacks: { title: ctx => `Score : ${ctx[0].label}%`, label: ctx => ` ${ctx.raw} candidat(s)` }
+      }
+    },
+    scales: {
+      y: { beginAtZero: true, ticks: { stepSize: 1, color: '#94A3B8' },
+        grid: { color: 'rgba(0,0,0,.04)' } },
+      x: { ticks: { color: '#64748B', font: { size: 11 } }, grid: { display: false } }
+    }
+  }
+});
+
 // Recherche et filtre
 function filtrer() {
   const search = document.getElementById('searchInput').value.toLowerCase();

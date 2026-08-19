@@ -1,0 +1,237 @@
+{% extends "base.html" %}
+{% block title %}Vérification dossier — {{ candidat.prenom }} {{ candidat.nom }}{% endblock %}
+
+{% block extra_css %}
+<style>
+  .doc-check-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--gris-clair);
+  }
+  .doc-check-row:last-child { border-bottom: none; }
+  .doc-label { font-weight: 600; font-size: .9rem; }
+  .doc-label small { display: block; font-weight: 400; color: var(--gris-moyen); font-size: .78rem; }
+  .toggle-group { display: flex; gap: 8px; }
+  .toggle-btn {
+    padding: 6px 18px;
+    border-radius: 3px;
+    font-weight: 700;
+    font-size: .82rem;
+    border: 2px solid;
+    cursor: pointer;
+    transition: all .15s;
+  }
+  .toggle-btn.oui  { border-color: #0D5724; color: #0D5724; }
+  .toggle-btn.non  { border-color: #DC2626; color: #DC2626; }
+  .toggle-btn.oui.active  { background: #0D5724; color: #fff; }
+  .toggle-btn.non.active  { background: #DC2626; color: #fff; }
+  .declared-val {
+    background: #F3F8F4;
+    border-left: 3px solid var(--vert);
+    padding: 6px 12px;
+    border-radius: 0 3px 3px 0;
+    font-size: .8rem;
+    color: var(--gris-fonce);
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="background:var(--fond);border-bottom:1px solid var(--gris-clair);padding:16px 0;margin-bottom:28px;">
+  <div class="container-xl px-4">
+    <div class="section-label"><i class="fas fa-folder-open me-1"></i>Étape 1 sur 2</div>
+    <h2 class="fw-bold mb-0" style="color:var(--vert);font-size:1.3rem;">Vérification du dossier</h2>
+    <small class="text-muted">Comparez les documents originaux apportés par le candidat avec sa déclaration initiale</small>
+  </div>
+</div>
+
+<div class="container-xl px-4 pb-5">
+  <div class="row g-4">
+
+    <!-- Fiche candidat (déclaration initiale) -->
+    <div class="col-lg-4">
+      <div class="card h-100">
+        <div class="card-header-ader">
+          <h6 class="mb-0"><i class="fas fa-user me-2"></i>Déclaration initiale</h6>
+        </div>
+        <div class="card-body p-3">
+          <div class="text-center mb-3">
+            <div style="width:56px;height:56px;background:var(--vert-pale);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 10px;">
+              <i class="fas fa-user fa-xl" style="color:var(--vert);"></i>
+            </div>
+            <div class="fw-bold">{{ candidat.prenom }} {{ candidat.nom }}</div>
+            <small class="text-muted">{{ candidat.email }}</small>
+          </div>
+          <table class="table table-sm mb-0">
+            <tr><td class="text-muted" style="font-size:.78rem;">Poste</td><td class="fw-semibold small">{{ candidat.poste }}</td></tr>
+            <tr><td class="text-muted" style="font-size:.78rem;">Diplôme</td><td class="fw-semibold small">{{ candidat.diplome }}</td></tr>
+            <tr><td class="text-muted" style="font-size:.78rem;">Spécialité</td><td class="fw-semibold small">{{ candidat.specialite }}</td></tr>
+            <tr><td class="text-muted" style="font-size:.78rem;">École</td><td class="fw-semibold small">{{ candidat.ecole }}</td></tr>
+            <tr><td class="text-muted" style="font-size:.78rem;">Promotion</td><td class="fw-semibold small">{{ candidat.promotion }}</td></tr>
+            <tr><td class="text-muted" style="font-size:.78rem;">Expérience</td><td class="fw-semibold small">{{ candidat.experience }} an(s)</td></tr>
+          </table>
+          <div class="mt-3">
+            <span class="badge-presel" style="font-size:.75rem;padding:4px 10px;">
+              Score IA : {{ (candidat.score_ia * 100)|round(1) }}%
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Formulaire de vérification -->
+    <div class="col-lg-8">
+      <div class="card">
+        <div class="card-header-ader">
+          <h6 class="mb-0"><i class="fas fa-clipboard-check me-2"></i>Grille de vérification — Documents originaux</h6>
+        </div>
+        <div class="card-body p-4">
+
+          <div class="alert alert-info py-2 mb-4">
+            <i class="fas fa-info-circle me-1"></i>
+            <small>Le candidat passe l'entretien dans tous les cas. La non-conformité est archivée en interne et influencera la décision finale.</small>
+          </div>
+
+          <form method="POST">
+
+            <!-- Documents à vérifier -->
+            <div class="mb-4">
+              <h6 class="fw-bold mb-3" style="color:var(--vert);">Documents à contrôler</h6>
+
+              <div class="doc-check-row">
+                <div class="doc-label">
+                  <i class="fas fa-graduation-cap me-2" style="color:var(--vert);"></i>Diplôme(s)
+                  <small>Déclaré : {{ candidat.diplome }} — {{ candidat.ecole }} ({{ candidat.promotion }})</small>
+                </div>
+                <div class="toggle-group">
+                  <button type="button" class="toggle-btn oui" onclick="setDoc('diplome', true, this)">Conforme</button>
+                  <button type="button" class="toggle-btn non" onclick="setDoc('diplome', false, this)">Non conforme</button>
+                </div>
+                <input type="hidden" name="diplome_conforme" id="diplome_conforme"
+                       value="{{ '1' if candidat.verification and candidat.verification.diplome_conforme else '0' }}">
+              </div>
+
+              <div class="doc-check-row">
+                <div class="doc-label">
+                  <i class="fas fa-briefcase me-2" style="color:var(--vert);"></i>Attestations d'expérience
+                  <small>Déclaré : {{ candidat.experience }} an(s) d'expérience</small>
+                </div>
+                <div class="toggle-group">
+                  <button type="button" class="toggle-btn oui" onclick="setDoc('experience', true, this)">Conforme</button>
+                  <button type="button" class="toggle-btn non" onclick="setDoc('experience', false, this)">Non conforme</button>
+                </div>
+                <input type="hidden" name="experience_conforme" id="experience_conforme"
+                       value="{{ '1' if candidat.verification and candidat.verification.experience_conforme else '0' }}">
+              </div>
+
+              <div class="doc-check-row">
+                <div class="doc-label">
+                  <i class="fas fa-id-card me-2" style="color:var(--vert);"></i>Carte d'identité nationale (CIN)
+                  <small>Vérification identité et adresse</small>
+                </div>
+                <div class="toggle-group">
+                  <button type="button" class="toggle-btn oui" onclick="setDoc('cin', true, this)">Conforme</button>
+                  <button type="button" class="toggle-btn non" onclick="setDoc('cin', false, this)">Non conforme</button>
+                </div>
+                <input type="hidden" name="cin_conforme" id="cin_conforme"
+                       value="{{ '1' if candidat.verification and candidat.verification.cin_conforme else '0' }}">
+              </div>
+
+              <div class="doc-check-row">
+                <div class="doc-label">
+                  <i class="fas fa-file-alt me-2" style="color:var(--vert);"></i>Autres documents
+                  <small>CV, lettres de recommandation, certificats...</small>
+                </div>
+                <div class="toggle-group">
+                  <button type="button" class="toggle-btn oui" onclick="setDoc('autres', true, this)">Conforme</button>
+                  <button type="button" class="toggle-btn non" onclick="setDoc('autres', false, this)">Non conforme</button>
+                </div>
+                <input type="hidden" name="autres_conformes" id="autres_conformes"
+                       value="{{ '1' if candidat.verification and candidat.verification.autres_conformes else '0' }}">
+              </div>
+            </div>
+
+            <!-- Vérificateur -->
+            <div class="row g-3 mb-4">
+              <div class="col-md-6">
+                <label class="form-label fw-semibold" style="font-size:.82rem;" for="f_verificateur">Nom du vérificateur <span class="text-danger">*</span></label>
+                <input id="f_verificateur" type="text" name="verificateur" class="form-control"
+                       value="{{ candidat.verification.verificateur if candidat.verification else '' }}"
+                       placeholder="Nom et prénom" required>
+              </div>
+              <div id="result-preview" class="col-md-6 d-flex align-items-end">
+                <div id="conformity-badge" style="padding:10px 16px;border-radius:4px;font-weight:700;font-size:.85rem;width:100%;text-align:center;background:#F3F8F4;color:var(--vert);border:1px solid #B8DEC8;">
+                  <i class="fas fa-check-circle me-1"></i>En attente de saisie
+                </div>
+              </div>
+            </div>
+
+            {% if candidat.verification and not candidat.verification.conforme %}
+            <div class="alert alert-warning py-2 mb-3">
+              <i class="fas fa-exclamation-triangle me-1"></i>
+              <small><strong>Motif interne archivé :</strong> {{ candidat.verification.motif_interne }}</small>
+            </div>
+            {% endif %}
+
+            <div class="d-flex gap-2">
+              <button type="submit" class="btn-ader" style="border-radius:3px;padding:10px 24px;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:8px;">
+                <i class="fas fa-save"></i>Enregistrer et passer à l'entretien
+              </button>
+              <a href="{{ url_for('detail_candidat', candidat_id=candidat.id) }}" class="btn btn-outline-secondary">
+                Annuler
+              </a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // Initialise les boutons selon les valeurs sauvegardées
+  const saved = {
+    diplome:    '{{ "1" if candidat.verification and candidat.verification.diplome_conforme else ("0" if candidat.verification else "1") }}',
+    experience: '{{ "1" if candidat.verification and candidat.verification.experience_conforme else ("0" if candidat.verification else "1") }}',
+    cin:        '{{ "1" if candidat.verification and candidat.verification.cin_conforme else ("0" if candidat.verification else "1") }}',
+    autres:     '{{ "1" if candidat.verification and candidat.verification.autres_conformes else ("0" if candidat.verification else "1") }}',
+  };
+  Object.entries(saved).forEach(([key, val]) => {
+    const row = document.getElementById(key + '_conforme').closest('.doc-check-row');
+    const btn = row.querySelector(val === '1' ? '.toggle-btn.oui' : '.toggle-btn.non');
+    if (btn) btn.classList.add('active');
+  });
+  updateBadge();
+
+  function setDoc(field, isOk, btn) {
+    document.getElementById(field + '_conforme').value = isOk ? '1' : '0';
+    const group = btn.closest('.toggle-group');
+    group.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    updateBadge();
+  }
+
+  function updateBadge() {
+    const all = ['diplome','experience','cin','autres'].every(
+      f => document.getElementById(f + '_conforme').value === '1'
+    );
+    const badge = document.getElementById('conformity-badge');
+    if (all) {
+      badge.style.background = '#E8F5EE';
+      badge.style.color = '#0D5724';
+      badge.style.borderColor = '#B8DEC8';
+      badge.innerHTML = '<i class="fas fa-check-circle me-1"></i>Dossier conforme';
+    } else {
+      badge.style.background = '#FEECEC';
+      badge.style.color = '#B91C1C';
+      badge.style.borderColor = '#FBBCBC';
+      badge.innerHTML = '<i class="fas fa-exclamation-circle me-1"></i>Dossier NON conforme';
+    }
+  }
+</script>
+{% endblock %}

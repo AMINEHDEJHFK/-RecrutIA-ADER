@@ -22,18 +22,18 @@
 
           <form method="POST" action="/login">
             <div class="mb-3">
-              <label class="form-label fw-semibold">Identifiant</label>
+              <label class="form-label fw-semibold" for="f_username">Identifiant</label>
               <div class="input-group">
                 <span class="input-group-text"><i class="fas fa-user"></i></span>
-                <input type="text" name="username" class="form-control"
+                <input type="text" name="username" id="f_username" class="form-control"
                        placeholder="Votre identifiant" required autofocus/>
               </div>
             </div>
             <div class="mb-4">
-              <label class="form-label fw-semibold">Mot de passe</label>
+              <label class="form-label fw-semibold" for="f_password">Mot de passe</label>
               <div class="input-group">
                 <span class="input-group-text"><i class="fas fa-key"></i></span>
-                <input type="password" name="password" class="form-control"
+                <input type="password" name="password" id="f_password" class="form-control"
                        placeholder="Votre mot de passe" required/>
               </div>
             </div>
@@ -45,7 +45,7 @@
           <hr class="my-3"/>
           <p class="text-center text-muted small mb-0">
             <i class="fas fa-info-circle me-1"></i>
-            Identifiant : <code>rh_ader</code> &nbsp;|&nbsp; Mot de passe : <code>ader2024</code>
+            Compte admin par défaut : <code>admin</code> &nbsp;|&nbsp; <code>ader2024</code>
           </p>
 
         </div>

@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% block title %}Modifier candidat - RecrutIA{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+
+      <nav class="mb-3">
+        <small>
+          <a href="{{ url_for('dashboard') }}" style="color:var(--vert);">Dashboard</a> /
+          <a href="{{ url_for('detail_candidat', candidat_id=candidat.id) }}" style="color:var(--vert);">{{ candidat.prenom }} {{ candidat.nom }}</a> /
+          Modifier
+        </small>
+      </nav>
+
+      <div class="card">
+        <div class="card-header-ader">
+          <h4 class="mb-0"><i class="fas fa-user-edit me-2"></i>Modifier les informations du candidat</h4>
+          <small style="color:rgba(255,255,255,.7);">Le score IA sera recalculé automatiquement après modification</small>
+        </div>
+        <div class="card-body p-4">
+
+          {% with messages = get_flashed_messages(with_categories=true) %}
+            {% for cat, msg in messages %}
+              <div class="alert alert-{{ cat }}">{{ msg }}</div>
+            {% endfor %}
+          {% endwith %}
+
+          <form method="POST">
+            <div class="row g-3">
+
+              <div class="col-12">
+                <h6 class="fw-bold" style="color:var(--vert);"><i class="fas fa-user me-1"></i> Informations personnelles</h6>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold" for="f_nom">Nom *</label>
+                <input id="f_nom" type="text" name="nom" class="form-control" value="{{ candidat.nom }}" required/>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold" for="f_prenom">Prénom *</label>
+                <input id="f_prenom" type="text" name="prenom" class="form-control" value="{{ candidat.prenom }}" required/>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold" for="f_email">Email</label>
+                <input id="f_email" type="email" name="email" class="form-control" value="{{ candidat.email or '' }}"/>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold" for="f_telephone">Téléphone</label>
+                <input id="f_telephone" type="text" name="telephone" class="form-control" value="{{ candidat.telephone or '' }}"/>
+              </div>
+
+              <div class="col-12 mt-2">
+                <h6 class="fw-bold" style="color:var(--vert);"><i class="fas fa-graduation-cap me-1"></i> Formation</h6>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold" for="f_diplome">Diplôme *</label>
+                <select id="f_diplome" name="diplome" class="form-select" required>
+                  {% for d in diplomes %}
+                  <option value="{{ d }}" {% if candidat.diplome == d %}selected{% endif %}>{{ d }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold" for="f_specialite">Spécialité</label>
+                <input id="f_specialite" type="text" name="specialite" class="form-control" value="{{ candidat.specialite or '' }}"/>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold" for="f_ecole">École</label>
+                <input id="f_ecole" type="text" name="ecole" class="form-control" value="{{ candidat.ecole or '' }}"/>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold" for="f_promotion">Année d'obtention</label>
+                <input id="f_promotion" type="number" name="promotion" class="form-control" value="{{ candidat.promotion }}" min="1990" max="2030"/>
+              </div>
+
+              <div class="col-12 mt-2">
+                <h6 class="fw-bold" style="color:var(--vert);"><i class="fas fa-clock me-1"></i> Expérience</h6>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold" for="f_experience">Années d'expérience *</label>
+                <input id="f_experience" type="number" name="experience" class="form-control" value="{{ candidat.experience }}" min="0" max="40"/>
+              </div>
+
+              <div class="alert alert-info py-2 col-12">
+                <i class="fas fa-robot me-1"></i>
+                <small>Le score IA sera automatiquement recalculé selon les nouvelles informations.</small>
+              </div>
+
+              <div class="col-12 d-flex gap-3 justify-content-end mt-2">
+                <a href="{{ url_for('detail_candidat', candidat_id=candidat.id) }}" class="btn btn-outline-secondary px-4">Annuler</a>
+                <button type="submit" class="btn btn-ader px-5">
+                  <i class="fas fa-save me-2"></i>Enregistrer les modifications
+                </button>
+              </div>
+
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

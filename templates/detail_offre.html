@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+{% block title %}{{ offre.titre }} - RecrutIA{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+
+  <!-- Breadcrumb -->
+  <nav class="mb-3">
+    <small>
+      <a href="{{ url_for('offres') }}" style="color:var(--vert);">Offres</a> / {{ offre.titre }}
+    </small>
+  </nav>
+
+  <!-- En-tête offre -->
+  <div class="card mb-4">
+    <div class="card-header-ader d-flex justify-content-between align-items-center">
+      <div>
+        <h4 class="mb-0 fw-bold">{{ offre.titre }}</h4>
+        <small style="color:rgba(255,255,255,.7);">Créée le {{ offre.date_creation.strftime('%d/%m/%Y') }} — Date limite : {{ offre.date_limite or '—' }}</small>
+      </div>
+      <div class="d-flex gap-2">
+        <a href="{{ url_for('importer_cvs', offre_id=offre.id) }}" class="btn btn-or">
+          <i class="fas fa-file-import me-2"></i>Importer des CVs
+        </a>
+        <a href="{{ url_for('classement_offre', offre_id=offre.id) }}" class="btn btn-ader">
+          <i class="fas fa-trophy me-2"></i>Classement final
+        </a>
+        <a href="{{ url_for('non_conformes', offre_id=offre.id) }}"
+           class="btn" style="background:#FEF0E6;color:var(--orange);border:1px solid var(--orange);">
+          <i class="fas fa-exclamation-triangle me-2"></i>Non conformes
+        </a>
+        <a href="{{ url_for('export_excel_offre', offre_id=offre.id) }}" class="btn btn-success">
+          <i class="fas fa-file-excel me-2"></i>Exporter Excel
+        </a>
+        <form method="POST" action="{{ url_for('notifier_preselectionnes', offre_id=offre.id) }}"
+              onsubmit="return confirm('Envoyer un email à tous les candidats présélectionnés ?')">
+          <button class="btn btn-primary">
+            <i class="fas fa-envelope me-2"></i>Notifier les présélectionnés
+          </button>
+        </form>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-3 text-center">
+          <div class="fw-bold fs-3" style="color:var(--vert);">{{ stats.total }}</div>
+          <small class="text-muted">Total candidats</small>
+        </div>
+        <div class="col-md-3 text-center">
+          <div class="fw-bold fs-3 text-success">{{ stats.preselectionnes }}</div>
+          <small class="text-muted">Présélectionnés</small>
+        </div>
+        <div class="col-md-3 text-center">
+          <div class="fw-bold fs-3 text-danger">{{ stats.non_retenus }}</div>
+          <small class="text-muted">Non retenus</small>
+        </div>
+        <div class="col-md-3 text-center">
+          <div class="fw-bold fs-3" style="color:var(--orange);">{{ stats.taux }}%</div>
+          <small class="text-muted">Taux de présélection</small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Critères de l'offre -->
+  <div class="card mb-4">
+    <div class="card-body">
+      <h6 class="fw-bold mb-3" style="color:var(--vert);"><i class="fas fa-clipboard-list me-1"></i>Critères de l'offre</h6>
+      <div class="row g-2">
+        <div class="col-md-3"><small class="text-muted d-block">Diplôme requis</small><span class="fw-semibold">{{ offre.diplome_requis or '—' }}</span></div>
+        <div class="col-md-3"><small class="text-muted d-block">Expérience min.</small><span class="fw-semibold">{{ offre.experience_min }} an(s)</span></div>
+        <div class="col-md-3"><small class="text-muted d-block">Langues</small><span class="fw-semibold">{{ offre.langues or '—' }}</span></div>
+        <div class="col-md-3"><small class="text-muted d-block">Postes disponibles</small><span class="fw-semibold">{{ offre.nombre_postes }}</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Classement candidats -->
+  <div class="card">
+    <div class="card-header-ader">
+      <h5 class="mb-0"><i class="fas fa-trophy me-2"></i>Classement des candidats par score IA</h5>
+    </div>
+    <div class="card-body p-0">
+      {% if candidats %}
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Candidat</th>
+              <th>Diplôme</th>
+              <th>Expérience</th>
+              <th>Score IA</th>
+              <th>Décision</th>
+              <th>Date dépôt</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for c in candidats %}
+            <tr>
+              <td class="fw-bold text-muted">{{ loop.index }}</td>
+              <td>
+                <div class="fw-bold">{{ c.nom }} {{ c.prenom }}</div>
+                <small class="text-muted">{{ c.email }}</small>
+              </td>
+              <td>{{ c.diplome }}</td>
+              <td>{{ c.experience }} ans</td>
+              <td style="min-width:160px;">
+                <div class="d-flex align-items-center gap-2">
+                  <div class="progress flex-grow-1" style="height:14px;">
+                    <div class="progress-bar {% if c.score_ia >= 0.5 %}bg-success{% else %}bg-danger{% endif %}"
+                         style="width:{{ (c.score_ia * 100)|round(1) }}%"></div>
+                  </div>
+                  <span class="fw-bold small">{{ (c.score_ia * 100)|round(1) }}%</span>
+                </div>
+              </td>
+              <td>
+                {% if c.decision == "Présélectionné" %}
+                  <span class="badge bg-success"><i class="fas fa-check me-1"></i>Présélectionné</span>
+                {% else %}
+                  <span class="badge bg-danger"><i class="fas fa-times me-1"></i>Non retenu</span>
+                {% endif %}
+              </td>
+              <td><small>{{ c.date_depot.strftime('%d/%m/%Y') if c.date_depot else '—' }}</small></td>
+              <td>
+                <a href="{{ url_for('detail_candidat', candidat_id=c.id) }}" class="btn btn-sm btn-ader">
+                  <i class="fas fa-eye"></i>
+                </a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="text-center py-5">
+        <i class="fas fa-inbox fa-4x mb-3" style="color:#dee2e6;"></i>
+        <p class="text-muted">Aucun candidat importé pour cette offre.</p>
+        <a href="{{ url_for('importer_cvs', offre_id=offre.id) }}" class="btn btn-ader">
+          <i class="fas fa-file-import me-2"></i>Importer des CVs
+        </a>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+</div>
+{% endblock %}

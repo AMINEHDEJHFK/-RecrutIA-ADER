@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% block title %}Offres de recrutement - RecrutIA{% endblock %}
+
+{% block content %}
+<div style="background:var(--fond);border-bottom:1px solid var(--gris-clair);padding:18px 0;margin-bottom:28px;">
+  <div class="container-xl px-4">
+    <div class="d-flex justify-content-between align-items-center">
+      <div>
+        <div class="section-label"><i class="fas fa-bullhorn me-1"></i>Recrutement</div>
+        <h2 class="fw-bold mb-0" style="color:var(--vert);font-size:1.4rem;">Offres de recrutement</h2>
+        <small class="text-muted">Gestion des annonces — ADER Fès</small>
+      </div>
+      <a href="{{ url_for('creer_offre') }}" class="btn-or" style="border-radius:3px;padding:10px 22px;font-weight:700;font-size:.85rem;text-decoration:none;display:inline-flex;align-items:center;gap:8px;">
+        <i class="fas fa-plus"></i>Nouvelle offre
+      </a>
+    </div>
+  </div>
+</div>
+
+<div class="container-xl px-4 pb-5">
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for cat, msg in messages %}
+      <div class="alert alert-{{ cat }} alert-dismissible fade show mb-3">{{ msg }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    {% endfor %}
+  {% endwith %}
+
+  {% if offres %}
+  <div class="row g-3">
+    {% for offre in offres %}
+    <div class="col-md-6 col-lg-4">
+      <div class="offre-card">
+        <!-- Référence et date -->
+        <div class="offre-meta">
+          <i class="fas fa-calendar-alt me-1"></i>Créée le {{ offre.date_creation.strftime('%d/%m/%Y') }}
+          {% if offre.date_limite %}
+          <span class="ms-2"><i class="fas fa-clock me-1"></i>Limite : {{ offre.date_limite }}</span>
+          {% endif %}
+        </div>
+
+        <!-- Titre -->
+        <div class="offre-titre">{{ offre.titre }}</div>
+
+        <!-- Tags -->
+        <div class="mb-2">
+          {% if offre.diplome_requis %}
+          <span class="offre-tag"><i class="fas fa-graduation-cap me-1"></i>{{ offre.diplome_requis }}</span>
+          {% endif %}
+          <span class="offre-tag"><i class="fas fa-briefcase me-1"></i>{{ offre.experience_min }} an{% if offre.experience_min > 1 %}s{% endif %} exp.</span>
+          {% if offre.langues %}
+          <span class="offre-tag"><i class="fas fa-language me-1"></i>{{ offre.langues }}</span>
+          {% endif %}
+        </div>
+
+        {% if offre.missions %}
+        <p style="font-size:.78rem;color:rgba(255,255,255,.6);margin-bottom:10px;overflow:hidden;max-height:50px;line-height:1.5;">
+          {{ offre.missions[:120] }}…
+        </p>
+        {% endif %}
+
+        <!-- Footer card -->
+        <div class="offre-footer">
+          <span class="offre-count">
+            <i class="fas fa-users me-1"></i>{{ offre.candidats|length }} candidat(s)
+            <span style="margin-left:8px;background:var(--orange);color:#fff;border-radius:2px;padding:2px 8px;font-size:.7rem;font-weight:700;">
+              {{ offre.nombre_postes }} poste{% if offre.nombre_postes > 1 %}s{% endif %}
+            </span>
+          </span>
+          <div class="d-flex gap-1">
+            <a href="{{ url_for('importer_cvs', offre_id=offre.id) }}" class="btn btn-sm" style="background:rgba(255,255,255,.15);color:#fff;border:none;border-radius:3px;font-size:.75rem;padding:5px 10px;">
+              <i class="fas fa-file-import me-1"></i>Importer
+            </a>
+            <a href="{{ url_for('detail_offre', offre_id=offre.id) }}" class="btn btn-sm" style="background:var(--orange);color:#fff;border:none;border-radius:3px;font-size:.75rem;padding:5px 10px;">
+              <i class="fas fa-eye me-1"></i>Voir
+            </a>
+            <form method="POST" action="{{ url_for('supprimer_offre', offre_id=offre.id) }}"
+                  onsubmit="return confirm('Supprimer cette offre ?')">
+              <button class="btn btn-sm" style="background:rgba(255,255,255,.1);color:rgba(255,255,255,.7);border:none;border-radius:3px;font-size:.75rem;padding:5px 8px;">
+                <i class="fas fa-trash"></i>
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  {% else %}
+  <div class="text-center py-5">
+    <div style="width:72px;height:72px;background:var(--vert-pale);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;">
+      <i class="fas fa-bullhorn fa-2x" style="color:var(--vert);"></i>
+    </div>
+    <h5 class="fw-bold text-muted">Aucune offre pour le moment</h5>
+    <p class="text-muted small">Créez votre première offre de recrutement pour commencer.</p>
+    <a href="{{ url_for('creer_offre') }}" class="btn-ader" style="border-radius:3px;padding:10px 24px;font-weight:700;font-size:.875rem;text-decoration:none;display:inline-flex;align-items:center;gap:8px;">
+      <i class="fas fa-plus"></i>Créer la première offre
+    </a>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

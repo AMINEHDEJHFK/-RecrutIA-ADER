@@ -6,9 +6,31 @@
   <div class="row justify-content-center">
     <div class="col-lg-8">
 
-      <a href="/dashboard" class="btn btn-sm btn-outline-secondary mb-3">
-        <i class="fas fa-arrow-left me-1"></i>Retour au dashboard
-      </a>
+      <div class="d-flex gap-2 mb-3 flex-wrap">
+        <a href="/dashboard" class="btn btn-sm btn-outline-secondary">
+          <i class="fas fa-arrow-left me-1"></i>Retour
+        </a>
+        <a href="{{ url_for('modifier_candidat', candidat_id=candidat.id) }}" class="btn btn-sm btn-ader">
+          <i class="fas fa-user-edit me-1"></i>Modifier
+        </a>
+        {% if "lectionn" in candidat.decision %}
+        <a href="{{ url_for('verification_dossier', candidat_id=candidat.id) }}" class="btn btn-sm btn-outline-secondary"
+           style="border-color:var(--orange);color:var(--orange);">
+          <i class="fas fa-folder-open me-1"></i>
+          {% if candidat.verification %}Voir vérification{% else %}Vérifier le dossier{% endif %}
+        </a>
+        <a href="{{ url_for('entretien_jury', candidat_id=candidat.id) }}" class="btn btn-sm btn-or">
+          <i class="fas fa-users me-1"></i>Entretien (4 jurys)
+        </a>
+        <a href="{{ url_for('explication_ia', candidat_id=candidat.id) }}" class="btn btn-sm btn-ader">
+          <i class="fas fa-robot me-1"></i>Explication IA
+        </a>
+        <a href="{{ url_for('questions_entretien', candidat_id=candidat.id) }}" class="btn btn-sm"
+           style="background:#EEF3FF;color:#3730A3;border:1px solid #C7D2FE;font-weight:600;">
+          <i class="fas fa-comments me-1"></i>Questions IA
+        </a>
+        {% endif %}
+      </div>
 
       <div class="card">
         <div class="card-header-ader d-flex justify-content-between align-items-center">
@@ -42,7 +64,7 @@
           <!-- Détails -->
           <div class="row g-3">
             <div class="col-md-6">
-              <h6 class="fw-bold" style="color:var(--ader-bleu);">
+              <h6 class="fw-bold" style="color:var(--vert);">
                 <i class="fas fa-user me-1"></i>Informations personnelles
               </h6>
               <table class="table table-sm">
@@ -53,7 +75,7 @@
               </table>
             </div>
             <div class="col-md-6">
-              <h6 class="fw-bold" style="color:var(--ader-bleu);">
+              <h6 class="fw-bold" style="color:var(--vert);">
                 <i class="fas fa-graduation-cap me-1"></i>Formation & Expérience
               </h6>
               <table class="table table-sm">
@@ -67,10 +89,69 @@
             </div>
           </div>
 
+          {% if candidat.entretien %}
+          <hr/>
+          <div class="card" style="border-left:4px solid var(--orange);">
+            <div class="card-body p-3">
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="fw-bold mb-0" style="color:var(--orange);">
+                  <i class="fas fa-clipboard-check me-1"></i>Résultat de l'entretien
+                </h6>
+                <span class="badge {% if candidat.entretien.decision_entretien == 'Retenu' %}bg-success{% else %}bg-danger{% endif %} fs-6">
+                  {% if candidat.entretien.decision_entretien == 'Retenu' %}
+                    <i class="fas fa-check me-1"></i>Retenu
+                  {% else %}
+                    <i class="fas fa-times me-1"></i>Éliminé
+                  {% endif %}
+                </span>
+              </div>
+              <div class="row g-2 mb-3">
+                {% for label, val in [
+                  ('Présentation',   candidat.entretien.note_presentation),
+                  ('Motivation',     candidat.entretien.note_motivation),
+                  ('Compétences',    candidat.entretien.note_competences),
+                  ('Communication',  candidat.entretien.note_communication),
+                  ('Culture gén.',   candidat.entretien.note_culture),
+                ] %}
+                <div class="col-md-4">
+                  <div style="font-size:.72rem;color:var(--gris-moyen);">{{ label }}</div>
+                  <div class="d-flex align-items-center gap-2">
+                    <div class="progress flex-grow-1" style="height:6px;">
+                      <div class="progress-bar bg-success" style="width:{{ (val/20*100)|int }}%"></div>
+                    </div>
+                    <span class="fw-bold small">{{ val }}/20</span>
+                  </div>
+                </div>
+                {% endfor %}
+              </div>
+              <div class="d-flex justify-content-between align-items-center">
+                <div>
+                  <div style="font-size:.72rem;color:var(--gris-moyen);">Évaluateur</div>
+                  <div class="fw-semibold small">{{ candidat.entretien.evaluateur }} — {{ candidat.entretien.poste_evaluateur }}</div>
+                </div>
+                <div class="text-center">
+                  <div style="font-size:1.8rem;font-weight:900;color:{% if candidat.entretien.score_entretien >= 12 %}#198754{% else %}#DC2626{% endif %};">
+                    {{ candidat.entretien.score_entretien }}/20
+                  </div>
+                  <div style="font-size:.7rem;color:var(--gris-moyen);">Score entretien</div>
+                </div>
+              </div>
+              {% if candidat.entretien.commentaire %}
+              <div class="alert alert-info py-2 mt-2 mb-0">
+                <i class="fas fa-comment me-1"></i>
+                <small>{{ candidat.entretien.commentaire }}</small>
+              </div>
+              {% endif %}
+            </div>
+          </div>
+          {% endif %}
+
           {% if candidat.cv_filename %}
-          <div class="alert alert-info mt-3 py-2">
-            <i class="fas fa-file-pdf me-2"></i>
-            CV déposé : <strong>{{ candidat.cv_filename }}</strong>
+          <div class="alert alert-info mt-3 py-2 d-flex align-items-center justify-content-between">
+            <span><i class="fas fa-file-pdf me-2"></i>CV déposé : <strong>{{ candidat.cv_filename }}</strong></span>
+            <a href="/static/uploads/{{ candidat.cv_filename }}" target="_blank" class="btn btn-sm btn-ader">
+              <i class="fas fa-eye me-1"></i>Voir le CV
+            </a>
           </div>
           {% endif %}
 

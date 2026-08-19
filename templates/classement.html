@@ -1,0 +1,311 @@
+{% extends "base.html" %}
+{% block title %}Classement — {{ offre.titre }}{% endblock %}
+
+{% block extra_css %}
+<style>
+  .classement-header {
+    background: linear-gradient(135deg, var(--vert-fonce) 0%, var(--vert) 100%);
+    color: #fff;
+    padding: 30px 36px;
+    border-radius: 8px;
+    margin-bottom: 24px;
+    position: relative;
+    overflow: hidden;
+  }
+  .classement-header::after {
+    content: '';
+    position: absolute;
+    right: -50px; top: -50px;
+    width: 220px; height: 220px;
+    border-radius: 50%;
+    background: rgba(255,255,255,.04);
+  }
+
+  /* Podium top 3 */
+  .podium-wrap { display: flex; align-items: flex-end; justify-content: center; gap: 16px; margin-bottom: 32px; }
+  .podium-card {
+    background: var(--blanc);
+    border: 1px solid var(--gris-clair);
+    border-radius: 10px;
+    text-align: center;
+    padding: 16px 14px 0;
+    position: relative;
+    box-shadow: 0 4px 16px rgba(0,0,0,.06);
+  }
+  .podium-card.p1 { width: 200px; order: 2; }
+  .podium-card.p2 { width: 180px; order: 1; }
+  .podium-card.p3 { width: 170px; order: 3; }
+  .podium-rank {
+    font-size: 2rem;
+    font-weight: 900;
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+  .p1 .podium-rank { color: #D4A017; }
+  .p2 .podium-rank { color: #9E9E9E; }
+  .p3 .podium-rank { color: #CD7F32; }
+  .podium-name { font-weight: 700; font-size: .88rem; color: var(--noir); }
+  .podium-email { font-size: .7rem; color: var(--gris-moyen); margin-bottom: 8px; }
+  .podium-score {
+    font-size: 1.5rem;
+    font-weight: 900;
+    margin: 8px 0 0;
+  }
+  .p1 .podium-score { color: var(--vert); }
+  .p2 .podium-score { color: var(--gris-moyen); }
+  .p3 .podium-score { color: var(--orange); }
+  .podium-bar {
+    height: 8px;
+    border-radius: 0 0 10px 10px;
+    margin-top: 12px;
+  }
+  .p1 .podium-bar { background: var(--vert); }
+  .p2 .podium-bar { background: var(--gris-moyen); }
+  .p3 .podium-bar { background: var(--orange); }
+  .podium-crown {
+    position: absolute;
+    top: -14px; left: 50%;
+    transform: translateX(-50%);
+    font-size: 1.4rem;
+  }
+
+  /* Tableau classement */
+  .rang-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    font-weight: 800;
+    font-size: .85rem;
+  }
+  .rang-1 { background: #FEF3CD; color: #B7791F; border: 2px solid #D4A017; }
+  .rang-2 { background: #F3F4F6; color: #6B7280; border: 2px solid #9E9E9E; }
+  .rang-3 { background: #FEF0E6; color: #92400E; border: 2px solid #CD7F32; }
+  .rang-other { background: var(--vert-pale); color: var(--vert); border: 1px solid var(--gris-clair); }
+
+  .score-chip {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 99px;
+    font-size: .78rem;
+    font-weight: 700;
+  }
+  .score-ia-chip { background: #EEF3FF; color: #3730A3; }
+  .score-ent-chip { background: var(--orange-clair); color: var(--orange); }
+  .score-final-chip {
+    background: var(--vert);
+    color: #fff;
+    font-size: .85rem;
+    padding: 4px 12px;
+  }
+
+  .dec-retenu { background: #E8F5EE; color: #0D5724; border: 1px solid #B8DEC8; border-radius: 4px; padding: 3px 10px; font-size: .75rem; font-weight: 700; }
+  .dec-elimine { background: #FEECEC; color: #B91C1C; border: 1px solid #FBBCBC; border-radius: 4px; padding: 3px 10px; font-size: .75rem; font-weight: 700; }
+  .dec-presel  { background: #EEF3FF; color: #3730A3; border: 1px solid #C7D2FE; border-radius: 4px; padding: 3px 10px; font-size: .75rem; font-weight: 700; }
+  .dec-nonret  { background: #FEF3E6; color: #B45309; border: 1px solid #FDE68A; border-radius: 4px; padding: 3px 10px; font-size: .75rem; font-weight: 700; }
+
+  .legende-item { display: flex; align-items: center; gap: 6px; font-size: .78rem; color: var(--gris-moyen); }
+
+  @media print {
+    .no-print { display: none !important; }
+    .classement-header { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+
+  <!-- Breadcrumb -->
+  <nav class="mb-3 no-print">
+    <small>
+      <a href="{{ url_for('offres') }}" style="color:var(--vert);">Offres</a> /
+      <a href="{{ url_for('detail_offre', offre_id=offre.id) }}" style="color:var(--vert);">{{ offre.titre }}</a> /
+      Classement final
+    </small>
+  </nav>
+
+  <!-- En-tête -->
+  <div class="classement-header">
+    <div style="font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.6);margin-bottom:6px;">
+      <i class="fas fa-landmark me-1"></i>ADER Fès — Service RH
+    </div>
+    <h3 class="fw-bold mb-1"><i class="fas fa-trophy me-2" style="color:var(--orange);"></i>Classement final des candidats</h3>
+    <div style="font-size:.9rem;opacity:.8;">{{ offre.titre }} — {{ resultats|length }} candidat(s)</div>
+    <div class="d-flex gap-4 mt-3">
+      <div>
+        <div style="font-size:.7rem;opacity:.6;">Présélectionnés IA</div>
+        <div style="font-size:1.3rem;font-weight:800;">{{ resultats|selectattr('score_ia','ge',50)|list|length }}</div>
+      </div>
+      <div>
+        <div style="font-size:.7rem;opacity:.6;">Entretiens effectués</div>
+        <div style="font-size:1.3rem;font-weight:800;">{{ resultats|selectattr('score_entretien')|list|length }}</div>
+      </div>
+      <div>
+        <div style="font-size:.7rem;opacity:.6;">Retenus finaux</div>
+        <div style="font-size:1.3rem;font-weight:800;color:var(--orange);">
+          {{ resultats|selectattr('decision_finale','equalto','Retenu')|list|length }}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Boutons actions -->
+  <div class="d-flex justify-content-between align-items-center mb-4 no-print">
+    <div class="legende-item d-flex gap-4">
+      <span class="legende-item"><span class="score-chip score-ia-chip">40%</span> Score IA</span>
+      <span class="legende-item"><span class="score-chip score-ent-chip">60%</span> Score entretien</span>
+      <span class="legende-item"><span class="score-chip score-final-chip">= Score final</span></span>
+    </div>
+    <div class="d-flex gap-2">
+      <button onclick="window.print()" class="btn btn-outline-secondary btn-sm">
+        <i class="fas fa-print me-1"></i>Imprimer
+      </button>
+      <a href="{{ url_for('detail_offre', offre_id=offre.id) }}" class="btn btn-outline-secondary btn-sm">
+        <i class="fas fa-arrow-left me-1"></i>Retour
+      </a>
+    </div>
+  </div>
+
+  <!-- Podium top 3 -->
+  {% if resultats|length >= 3 %}
+  <div class="podium-wrap mb-4">
+    {% for pos, cls in [(1,'p1'),(2,'p2'),(3,'p3')] %}
+    {% set r = resultats[pos-1] %}
+    <div class="podium-card {{ cls }}">
+      {% if pos == 1 %}<div class="podium-crown">👑</div>{% endif %}
+      <div class="podium-rank">#{{ pos }}</div>
+      <div class="podium-name">{{ r.candidat.prenom }} {{ r.candidat.nom }}</div>
+      <div class="podium-email">{{ r.candidat.email }}</div>
+      {% if r.score_entretien %}
+        <div style="font-size:.7rem;color:var(--gris-moyen);">IA: {{ r.score_ia }}% · Entretien: {{ r.score_entretien }}/20</div>
+      {% endif %}
+      <div class="podium-score">{{ r.score_final }}%</div>
+      <div class="podium-bar"></div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- Tableau complet -->
+  <div class="card">
+    <div class="card-header-ader d-flex justify-content-between align-items-center">
+      <h5 class="mb-0"><i class="fas fa-list-ol me-2"></i>Classement complet</h5>
+      <small style="color:rgba(255,255,255,.7);">Score final = 40% score IA + 60% score entretien</small>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead>
+            <tr>
+              <th style="width:60px;">Rang</th>
+              <th>Candidat</th>
+              <th>Diplôme</th>
+              <th>Exp.</th>
+              <th>Score IA</th>
+              <th>Score entretien</th>
+              <th>Score final</th>
+              <th>Décision</th>
+              <th class="no-print">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for r in resultats %}
+            {% set rang = loop.index %}
+            <tr {% if r.decision_finale == 'Retenu' %}style="background:var(--vert-pale);"{% endif %}>
+
+              <!-- Rang -->
+              <td class="text-center">
+                <span class="rang-badge {% if rang==1 %}rang-1{% elif rang==2 %}rang-2{% elif rang==3 %}rang-3{% else %}rang-other{% endif %}">
+                  {{ rang }}
+                </span>
+              </td>
+
+              <!-- Candidat -->
+              <td>
+                <div class="fw-bold">{{ r.candidat.prenom }} {{ r.candidat.nom }}</div>
+                <small class="text-muted">{{ r.candidat.email }}</small>
+              </td>
+
+              <!-- Diplôme -->
+              <td><small>{{ r.candidat.diplome }}</small></td>
+
+              <!-- Expérience -->
+              <td><small>{{ r.candidat.experience }} ans</small></td>
+
+              <!-- Score IA -->
+              <td>
+                <div class="d-flex align-items-center gap-2">
+                  <div class="progress" style="width:70px;height:8px;">
+                    <div class="progress-bar {% if r.score_ia >= 50 %}bg-success{% else %}bg-danger{% endif %}"
+                         style="width:{{ r.score_ia }}%"></div>
+                  </div>
+                  <span class="score-chip score-ia-chip">{{ r.score_ia }}%</span>
+                </div>
+              </td>
+
+              <!-- Score entretien -->
+              <td>
+                {% if r.score_entretien %}
+                <div class="d-flex align-items-center gap-2">
+                  <div class="progress" style="width:70px;height:8px;">
+                    <div class="progress-bar" style="width:{{ (r.score_entretien/20*100)|int }}%;background:var(--orange);"></div>
+                  </div>
+                  <span class="score-chip score-ent-chip">{{ r.score_entretien }}/20</span>
+                </div>
+                {% else %}
+                <span class="text-muted small"><i class="fas fa-clock me-1"></i>En attente</span>
+                {% endif %}
+              </td>
+
+              <!-- Score final -->
+              <td>
+                <div class="d-flex align-items-center gap-2">
+                  <div class="progress" style="width:70px;height:10px;">
+                    <div class="progress-bar" style="width:{{ r.score_final }}%;background:var(--vert);"></div>
+                  </div>
+                  <span class="score-chip score-final-chip">{{ r.score_final }}%</span>
+                </div>
+              </td>
+
+              <!-- Décision -->
+              <td>
+                {% if r.decision_finale == "Retenu" %}
+                  <span class="dec-retenu"><i class="fas fa-check me-1"></i>Retenu</span>
+                {% elif r.decision_finale == "Éliminé" %}
+                  <span class="dec-elimine"><i class="fas fa-times me-1"></i>Éliminé</span>
+                {% elif "lectionn" in r.decision_finale %}
+                  <span class="dec-presel"><i class="fas fa-hourglass me-1"></i>Présélectionné</span>
+                {% else %}
+                  <span class="dec-nonret"><i class="fas fa-minus me-1"></i>Non retenu</span>
+                {% endif %}
+              </td>
+
+              <!-- Action -->
+              <td class="no-print">
+                <a href="{{ url_for('detail_candidat', candidat_id=r.candidat.id) }}" class="btn btn-sm btn-ader">
+                  <i class="fas fa-eye"></i>
+                </a>
+              </td>
+
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Note méthodologique -->
+  <div class="alert alert-info mt-3 py-2 no-print">
+    <i class="fas fa-info-circle me-1"></i>
+    <small>
+      <strong>Méthode de classement :</strong>
+      Score final = (Score IA × 40%) + (Score entretien/20 × 100 × 60%).
+      Les candidats sans entretien sont classés sur leur score IA uniquement.
+    </small>
+  </div>
+
+</div>
+{% endblock %}

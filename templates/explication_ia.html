@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+{% block title %}Explication IA — {{ candidat.prenom }} {{ candidat.nom }}{% endblock %}
+
+{% block extra_css %}
+<style>
+  .contrib-bar-wrap {
+    display: flex; align-items: center; gap: 12px; margin-bottom: 14px;
+  }
+  .contrib-label { width: 180px; font-size: .82rem; font-weight: 600; flex-shrink: 0; }
+  .contrib-track {
+    flex: 1; height: 18px; background: var(--gris-clair);
+    border-radius: 3px; overflow: hidden; position: relative;
+  }
+  .contrib-fill-pos { height: 100%; background: var(--vert); border-radius: 3px; transition: width .4s; }
+  .contrib-fill-neg { height: 100%; background: #DC2626; border-radius: 3px; transition: width .4s; }
+  .contrib-val { width: 70px; text-align: right; font-size: .82rem; font-weight: 700; flex-shrink: 0; }
+  .contrib-val.pos { color: var(--vert); }
+  .contrib-val.neg { color: #DC2626; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="background:var(--fond);border-bottom:1px solid var(--gris-clair);padding:16px 0;margin-bottom:28px;">
+  <div class="container-xl px-4">
+    <nav class="mb-1">
+      <small>
+        <a href="{{ url_for('detail_candidat', candidat_id=candidat.id) }}" style="color:var(--vert);">
+          {{ candidat.prenom }} {{ candidat.nom }}
+        </a> / Explication IA
+      </small>
+    </nav>
+    <div class="section-label"><i class="fas fa-robot me-1"></i>Intelligence Artificielle — Explainabilité</div>
+    <h2 class="fw-bold mb-0" style="color:var(--vert);font-size:1.3rem;">
+      Pourquoi ce score ? — Analyse SHAP
+    </h2>
+    <small class="text-muted">Contribution de chaque critère au score IA de {{ (candidat.score_ia*100)|round(1) }}%</small>
+  </div>
+</div>
+
+<div class="container-xl px-4 pb-5">
+  <div class="row g-4">
+
+    <!-- Score global -->
+    <div class="col-lg-4">
+      <div class="card h-100">
+        <div class="card-header-ader">
+          <h6 class="mb-0"><i class="fas fa-user me-1"></i>Profil candidat</h6>
+        </div>
+        <div class="card-body p-3">
+          <div class="text-center mb-3">
+            <div style="width:90px;height:90px;border-radius:50%;background:{% if candidat.score_ia >= 0.5 %}var(--vert-pale){% else %}#FEECEC{% endif %};display:flex;align-items:center;justify-content:center;flex-direction:column;margin:0 auto 10px;">
+              <div style="font-size:1.8rem;font-weight:900;color:{% if candidat.score_ia >= 0.5 %}var(--vert){% else %}#DC2626{% endif %};">
+                {{ (candidat.score_ia*100)|round(1) }}%
+              </div>
+              <div style="font-size:.65rem;color:var(--gris-moyen);">Score IA</div>
+            </div>
+            <div class="fw-bold">{{ candidat.prenom }} {{ candidat.nom }}</div>
+            <div class="text-muted small">{{ candidat.poste }}</div>
+          </div>
+          <table class="table table-sm mb-0">
+            <tr><td class="text-muted" style="font-size:.78rem;">Diplôme</td><td class="small fw-semibold">{{ candidat.diplome }}</td></tr>
+            <tr><td class="text-muted" style="font-size:.78rem;">Spécialité</td><td class="small fw-semibold">{{ candidat.specialite }}</td></tr>
+            <tr><td class="text-muted" style="font-size:.78rem;">École</td><td class="small fw-semibold">{{ candidat.ecole }}</td></tr>
+            <tr><td class="text-muted" style="font-size:.78rem;">Expérience</td><td class="small fw-semibold">{{ candidat.experience }} an(s)</td></tr>
+            <tr><td class="text-muted" style="font-size:.78rem;">Promotion</td><td class="small fw-semibold">{{ candidat.promotion }}</td></tr>
+          </table>
+          <div class="mt-3">
+            {% if candidat.score_ia >= 0.5 %}
+            <span class="badge-presel">Présélectionné</span>
+            {% else %}
+            <span class="badge-nonret">Non retenu</span>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Graphique SHAP -->
+    <div class="col-lg-8">
+      <div class="card">
+        <div class="card-header-ader d-flex justify-content-between align-items-center">
+          <h5 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Contributions par critère</h5>
+          <span style="font-size:.72rem;color:rgba(255,255,255,.7);">Méthode SHAP — Random Forest</span>
+        </div>
+        <div class="card-body p-4">
+
+          {% if contributions %}
+
+          <div class="alert alert-info py-2 mb-4" style="font-size:.8rem;">
+            <i class="fas fa-info-circle me-1"></i>
+            <strong style="color:var(--vert);">Vert</strong> = critère qui <strong>augmente</strong> le score &nbsp;|&nbsp;
+            <strong style="color:#DC2626;">Rouge</strong> = critère qui <strong>diminue</strong> le score
+          </div>
+
+          {% set max_abs = contributions | map(attribute='contribution') | map('abs') | max %}
+          {% for c in contributions %}
+          {% set pct = ((c.contribution | abs) / max_abs * 100) | round(1) %}
+          <div class="contrib-bar-wrap">
+            <div class="contrib-label">
+              {{ c.label }}
+            </div>
+            <div class="contrib-track">
+              {% if c.contribution >= 0 %}
+              <div class="contrib-fill-pos" style="width:{{ pct }}%;"></div>
+              {% else %}
+              <div class="contrib-fill-neg" style="width:{{ pct }}%;"></div>
+              {% endif %}
+            </div>
+            <div class="contrib-val {% if c.contribution >= 0 %}pos{% else %}neg{% endif %}">
+              {% if c.contribution >= 0 %}+{% endif %}{{ (c.contribution * 100)|round(2) }}
+            </div>
+          </div>
+          {% endfor %}
+
+          <hr class="my-3">
+
+          <!-- Interprétation automatique -->
+          <div style="background:var(--fond);border-radius:4px;padding:14px 16px;">
+            <div class="fw-bold mb-2" style="font-size:.82rem;color:var(--vert);">
+              <i class="fas fa-lightbulb me-1"></i>Interprétation automatique
+            </div>
+            {% set top_pos = contributions | selectattr('contribution', 'gt', 0) | list | first %}
+            {% set top_neg = contributions | selectattr('contribution', 'lt', 0) | list | first %}
+            <ul class="mb-0" style="font-size:.82rem;color:var(--gris-fonce);">
+              {% if top_pos %}
+              <li><strong>Point fort :</strong> {{ top_pos.label }} contribue positivement au score (+{{ (top_pos.contribution*100)|round(1) }} pts)</li>
+              {% endif %}
+              {% if top_neg %}
+              <li class="mt-1"><strong>Point faible :</strong> {{ top_neg.label }} pénalise le score ({{ (top_neg.contribution*100)|round(1) }} pts)</li>
+              {% endif %}
+              <li class="mt-1">
+                {% if candidat.score_ia >= 0.5 %}
+                Le profil global <strong style="color:var(--vert);">correspond</strong> aux critères du poste {{ candidat.poste }}.
+                {% else %}
+                Le profil global <strong style="color:#DC2626;">ne correspond pas suffisamment</strong> aux critères du poste {{ candidat.poste }}.
+                {% endif %}
+              </li>
+            </ul>
+          </div>
+
+          {% else %}
+          <div class="text-center py-4 text-muted">
+            <i class="fas fa-exclamation-triangle fa-2x mb-2"></i>
+            <p>Impossible de calculer les contributions SHAP pour ce candidat.</p>
+          </div>
+          {% endif %}
+
+        </div>
+      </div>
+
+      <div class="mt-3 d-flex gap-2">
+        <a href="{{ url_for('detail_candidat', candidat_id=candidat.id) }}" class="btn btn-outline-secondary">
+          <i class="fas fa-arrow-left me-1"></i>Retour
+        </a>
+        <a href="{{ url_for('questions_entretien', candidat_id=candidat.id) }}" class="btn-or"
+           style="border-radius:3px;padding:8px 18px;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:6px;">
+          <i class="fas fa-comments"></i>Générer questions d'entretien
+        </a>
+        <button onclick="window.print()" class="btn btn-outline-secondary ms-auto">
+          <i class="fas fa-print me-1"></i>Imprimer
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+{% block title %}Importer des CVs - RecrutIA{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-9">
+
+      <!-- Breadcrumb -->
+      <nav class="mb-3">
+        <small>
+          <a href="{{ url_for('offres') }}" style="color:var(--vert);">Offres</a> /
+          <a href="{{ url_for('detail_offre', offre_id=offre.id) }}" style="color:var(--vert);">{{ offre.titre }}</a> /
+          Import CVs
+        </small>
+      </nav>
+
+      <div class="card">
+        <div class="card-header-ader">
+          <h4 class="mb-0"><i class="fas fa-file-import me-2"></i>Importer les CVs des candidats</h4>
+          <small style="color:rgba(255,255,255,.7);">Offre : {{ offre.titre }}</small>
+        </div>
+        <div class="card-body p-4">
+
+          {% with messages = get_flashed_messages(with_categories=true) %}
+            {% for cat, msg in messages %}
+              <div class="alert alert-{{ cat }}">{{ msg }}</div>
+            {% endfor %}
+          {% endwith %}
+
+          <!-- Résultats si import effectué -->
+          {% if resultats %}
+          <div class="mb-4">
+            <h6 class="fw-bold mb-3" style="color:var(--vert);">
+              <i class="fas fa-check-circle me-1 text-success"></i>Résultats de l'import
+            </h6>
+            <div class="table-responsive">
+              <table class="table table-hover align-middle">
+                <thead>
+                  <tr>
+                    <th>Fichier CV</th>
+                    <th>Candidat extrait</th>
+                    <th>Score IA</th>
+                    <th>Décision</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for r in resultats %}
+                  <tr>
+                    <td><i class="fas fa-file-pdf text-danger me-1"></i>{{ r.fichier }}</td>
+                    <td>{{ r.nom }}</td>
+                    <td>
+                      <div class="d-flex align-items-center gap-2">
+                        <div class="progress flex-grow-1" style="height:12px;">
+                          <div class="progress-bar {% if r.score >= 50 %}bg-success{% else %}bg-danger{% endif %}"
+                               style="width:{{ r.score }}%"></div>
+                        </div>
+                        <span class="fw-bold">{{ r.score }}%</span>
+                      </div>
+                    </td>
+                    <td>
+                      {% if r.decision == "Présélectionné" %}
+                        <span class="badge bg-success">Présélectionné</span>
+                      {% else %}
+                        <span class="badge bg-danger">Non retenu</span>
+                      {% endif %}
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+            <div class="d-flex gap-2 mt-3">
+              <a href="{{ url_for('detail_offre', offre_id=offre.id) }}" class="btn btn-ader">
+                <i class="fas fa-eye me-2"></i>Voir le classement complet
+              </a>
+              <a href="{{ url_for('importer_cvs', offre_id=offre.id) }}" class="btn btn-outline-secondary">
+                <i class="fas fa-plus me-2"></i>Importer d'autres CVs
+              </a>
+            </div>
+          </div>
+          <hr/>
+          {% endif %}
+
+          <!-- Formulaire upload -->
+          <form method="POST" enctype="multipart/form-data" id="importForm">
+
+            <div class="upload-zone mb-4" id="uploadZone">
+              <i class="fas fa-cloud-upload-alt fa-3x mb-2" style="color:var(--orange);"></i>
+              <p class="mb-1 fw-bold">Clique pour choisir les CVs</p>
+              <small class="text-muted">Plusieurs fichiers PDF acceptés — Max 10 MB chacun</small>
+            </div>
+            <input type="file" name="cvs" id="cvsInput" accept=".pdf" multiple class="form-control mb-3"/>
+
+            <div id="fileList" class="mb-3"></div>
+
+            <div class="alert alert-info py-2">
+              <i class="fas fa-info-circle me-1"></i>
+              <small>Les informations seront extraites automatiquement depuis chaque CV. Le score IA sera calculé selon les critères de l'offre <strong>{{ offre.titre }}</strong>.</small>
+            </div>
+
+            <div class="d-flex gap-3 justify-content-end mt-3">
+              <a href="{{ url_for('detail_offre', offre_id=offre.id) }}" class="btn btn-outline-secondary px-4">Annuler</a>
+              <button type="submit" class="btn btn-ader px-5" id="btnImport">
+                <i class="fas fa-file-import me-2"></i>Lancer l'analyse IA
+              </button>
+            </div>
+          </form>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const zone = document.getElementById('uploadZone');
+const input = document.getElementById('cvsInput');
+const fileList = document.getElementById('fileList');
+const btnImport = document.getElementById('btnImport');
+
+zone.addEventListener('click', () => input.click());
+zone.addEventListener('dragover', e => { e.preventDefault(); zone.style.background = '#fffbf0'; });
+zone.addEventListener('dragleave', () => zone.style.background = '');
+zone.addEventListener('drop', e => {
+  e.preventDefault();
+  input.files = e.dataTransfer.files;
+  afficherFichiers(e.dataTransfer.files);
+});
+input.addEventListener('change', () => afficherFichiers(input.files));
+
+function afficherFichiers(files) {
+  if (!files.length) return;
+  let html = '<ul class="list-group">';
+  for (let f of files) {
+    html += `<li class="list-group-item d-flex align-items-center gap-2">
+      <i class="fas fa-file-pdf text-danger"></i> ${f.name}
+      <span class="ms-auto text-muted small">${(f.size/1024).toFixed(0)} KB</span>
+    </li>`;
+  }
+  html += '</ul>';
+  fileList.innerHTML = html;
+  zone.innerHTML = `<i class="fas fa-check-circle fa-2x mb-2" style="color:var(--orange);"></i>
+    <p class="mb-0 fw-bold">${files.length} fichier(s) sélectionné(s)</p>`;
+  btnImport.disabled = false;
+}
+
+// Afficher spinner pendant l'analyse
+document.getElementById('importForm').addEventListener('submit', () => {
+  btnImport.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Analyse en cours...';
+  btnImport.disabled = true;
+});
+</script>
+{% endblock %}

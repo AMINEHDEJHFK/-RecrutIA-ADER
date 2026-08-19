@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+{% block title %}Créer une offre - RecrutIA{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-9">
+
+      <div class="card">
+        <div class="card-header-ader">
+          <h4 class="mb-0"><i class="fas fa-bullhorn me-2"></i>Créer une offre de recrutement</h4>
+          <small style="color:rgba(255,255,255,.7);">Uploadez l'annonce PDF — les informations sont extraites automatiquement</small>
+        </div>
+        <div class="card-body p-4">
+
+          <!-- Upload annonce PDF -->
+          <div class="upload-zone mb-4" id="uploadZone">
+            <i class="fas fa-file-pdf fa-3x mb-2" style="color:var(--orange);"></i>
+            <p class="mb-1 fw-bold">Glissez l'annonce PDF ici ou cliquez pour choisir</p>
+            <small class="text-muted">Format PDF uniquement</small>
+            <input type="file" id="offrePdf" accept=".pdf" style="display:none"/>
+          </div>
+          <div id="uploadStatus" class="text-center mb-3" style="display:none;">
+            <div class="spinner-border spinner-border-sm text-primary me-2"></div>
+            <span>Extraction en cours...</span>
+          </div>
+
+          <hr/>
+
+          <form method="POST" action="{{ url_for('creer_offre') }}" id="mainForm">
+
+            <!-- Infos principales -->
+            <div class="row g-3">
+              <div class="col-12">
+                <h6 class="fw-bold" style="color:var(--vert);">
+                  <i class="fas fa-info-circle me-1"></i> Informations générales
+                </h6>
+              </div>
+              <div class="col-12">
+                <label class="form-label fw-semibold" for="f_titre">Titre du poste *</label>
+                <input type="text" name="titre" id="f_titre" class="form-control" required
+                       placeholder="Ex : Chef de projets Architecte"/>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold" for="f_poste">Poste *</label>
+                <input type="text" name="poste" id="f_poste" class="form-control" required
+                       placeholder="Ex : Architecte"/>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold" for="f_nombre_postes">Nombre de postes</label>
+                <input type="number" name="nombre_postes" id="f_nombre_postes" class="form-control"
+                       min="1" value="1"/>
+              </div>
+
+              <!-- Conditions -->
+              <div class="col-12 mt-2">
+                <h6 class="fw-bold" style="color:var(--vert);">
+                  <i class="fas fa-graduation-cap me-1"></i> Conditions requises
+                </h6>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold" for="f_diplome_requis">Diplôme requis</label>
+                <input type="text" name="diplome_requis" id="f_diplome_requis" class="form-control"
+                       placeholder="Ex : Architecte, Master, Licence..."/>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold" for="f_experience_min">Expérience minimum (années)</label>
+                <input type="number" name="experience_min" id="f_experience_min" class="form-control"
+                       min="0" value="0"/>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold" for="f_specialite">Spécialité</label>
+                <input type="text" name="specialite" id="f_specialite" class="form-control"
+                       placeholder="Ex : Architecture, Génie Civil..."/>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold" for="f_langues">Langues requises</label>
+                <input type="text" name="langues" id="f_langues" class="form-control"
+                       placeholder="Ex : Arabe, Français, Anglais"/>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold" for="f_date_limite">Date limite de candidature</label>
+                <input type="text" name="date_limite" id="f_date_limite" class="form-control"
+                       placeholder="Ex : 31 Décembre 2024"/>
+              </div>
+
+              <!-- Missions -->
+              <div class="col-12 mt-2">
+                <h6 class="fw-bold" style="color:var(--vert);">
+                  <i class="fas fa-tasks me-1"></i> Missions & Compétences
+                </h6>
+              </div>
+              <div class="col-12">
+                <label class="form-label fw-semibold" for="f_missions">Missions</label>
+                <textarea name="missions" id="f_missions" class="form-control" rows="5"
+                          placeholder="Décrivez les missions du poste..."></textarea>
+              </div>
+              <div class="col-12">
+                <label class="form-label fw-semibold" for="f_competences">Compétences requises</label>
+                <textarea name="competences" id="f_competences" class="form-control" rows="4"
+                          placeholder="Listez les compétences requises..."></textarea>
+              </div>
+
+              <div class="col-12 d-flex gap-3 mt-3 justify-content-end">
+                <a href="{{ url_for('offres') }}" class="btn btn-outline-secondary px-4">Annuler</a>
+                <button type="submit" class="btn btn-ader px-5">
+                  <i class="fas fa-save me-2"></i>Enregistrer l'offre
+                </button>
+              </div>
+            </div>
+          </form>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const zone = document.getElementById('uploadZone');
+const input = document.getElementById('offrePdf');
+
+zone.addEventListener('click', () => input.click());
+zone.addEventListener('dragover', e => { e.preventDefault(); zone.style.background = '#fffbf0'; });
+zone.addEventListener('dragleave', () => zone.style.background = '');
+zone.addEventListener('drop', e => { e.preventDefault(); if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]); });
+input.addEventListener('change', () => { if (input.files[0]) handleFile(input.files[0]); });
+
+function handleFile(file) {
+  if (!file.name.endsWith('.pdf')) { alert('PDF uniquement.'); return; }
+
+  zone.innerHTML = `<i class="fas fa-file-pdf fa-2x mb-2" style="color:var(--orange);"></i>
+    <p class="mb-0 fw-bold">${file.name}</p>
+    <small class="text-success"><i class="fas fa-check me-1"></i>Fichier chargé — extraction en cours...</small>`;
+  document.getElementById('uploadStatus').style.display = 'block';
+
+  const fd = new FormData();
+  fd.append('offre_pdf', file);
+
+  fetch('/extraire_offre', { method: 'POST', body: fd })
+    .then(r => r.json())
+    .then(data => {
+      document.getElementById('uploadStatus').style.display = 'none';
+      if (data.titre)          document.getElementById('f_titre').value = data.titre;
+      if (data.poste)          document.getElementById('f_poste').value = data.poste;
+      if (data.nombre_postes)  document.getElementById('f_nombre_postes').value = data.nombre_postes;
+      if (data.diplome_requis) document.getElementById('f_diplome_requis').value = data.diplome_requis;
+      if (data.experience_min) document.getElementById('f_experience_min').value = data.experience_min;
+      if (data.specialite)     document.getElementById('f_specialite').value = data.specialite;
+      if (data.langues)        document.getElementById('f_langues').value = data.langues;
+      if (data.missions)       document.getElementById('f_missions').value = data.missions;
+      if (data.competences)    document.getElementById('f_competences').value = data.competences;
+      if (data.date_limite)    document.getElementById('f_date_limite').value = data.date_limite;
+      zone.innerHTML += `<br><small class="text-success fw-bold"><i class="fas fa-magic me-1"></i>Informations extraites — vérifiez et complétez si nécessaire.</small>`;
+    })
+    .catch(() => {
+      document.getElementById('uploadStatus').style.display = 'none';
+      zone.innerHTML += `<br><small class="text-warning">Extraction partielle — complétez manuellement.</small>`;
+    });
+}
+</script>
+{% endblock %}

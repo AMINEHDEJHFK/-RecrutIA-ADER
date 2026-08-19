@@ -15,7 +15,7 @@
 
           <!-- Upload CV -->
           <div class="upload-zone mb-4" id="uploadZone">
-            <i class="fas fa-cloud-upload-alt fa-3x mb-2" style="color:var(--ader-or);"></i>
+            <i class="fas fa-cloud-upload-alt fa-3x mb-2" style="color:var(--orange);"></i>
             <p class="mb-1 fw-bold">Glissez votre CV ici ou cliquez pour choisir</p>
             <small class="text-muted">Format PDF uniquement — Max 10 MB</small>
             <input type="file" id="cvFile" accept=".pdf" style="display:none"/>
@@ -34,36 +34,36 @@
             <div class="row g-3">
               <!-- Infos personnelles -->
               <div class="col-12">
-                <h6 class="fw-bold" style="color:var(--ader-bleu);">
+                <h6 class="fw-bold" style="color:var(--vert);">
                   <i class="fas fa-user me-1"></i> Informations personnelles
                 </h6>
               </div>
               <div class="col-md-6">
-                <label class="form-label fw-semibold">Nom *</label>
+                <label class="form-label fw-semibold" for="f_nom">Nom *</label>
                 <input type="text" name="nom" id="f_nom" class="form-control" required placeholder="EX : SAGHIRI"/>
               </div>
               <div class="col-md-6">
-                <label class="form-label fw-semibold">Prénom *</label>
+                <label class="form-label fw-semibold" for="f_prenom">Prénom *</label>
                 <input type="text" name="prenom" id="f_prenom" class="form-control" required placeholder="Ex : Amine"/>
               </div>
               <div class="col-md-6">
-                <label class="form-label fw-semibold">Email *</label>
+                <label class="form-label fw-semibold" for="f_email">Email *</label>
                 <input type="email" name="email" id="f_email" class="form-control" required placeholder="email@exemple.com"/>
               </div>
               <div class="col-md-6">
-                <label class="form-label fw-semibold">Téléphone</label>
+                <label class="form-label fw-semibold" for="f_telephone">Téléphone</label>
                 <input type="text" name="telephone" id="f_telephone" class="form-control" placeholder="06XXXXXXXX"/>
               </div>
 
               <!-- Poste -->
               <div class="col-12 mt-2">
-                <h6 class="fw-bold" style="color:var(--ader-bleu);">
+                <h6 class="fw-bold" style="color:var(--vert);">
                   <i class="fas fa-briefcase me-1"></i> Poste souhaité
                 </h6>
               </div>
               <div class="col-12">
-                <label class="form-label fw-semibold">Poste *</label>
-                <select name="poste" class="form-select" required>
+                <label class="form-label fw-semibold" for="f_poste">Poste *</label>
+                <select id="f_poste" name="poste" class="form-select" required>
                   <option value="">-- Choisir un poste --</option>
                   {% for p in postes %}
                   <option value="{{ p }}">
@@ -78,12 +78,12 @@
 
               <!-- Formation -->
               <div class="col-12 mt-2">
-                <h6 class="fw-bold" style="color:var(--ader-bleu);">
+                <h6 class="fw-bold" style="color:var(--vert);">
                   <i class="fas fa-graduation-cap me-1"></i> Formation
                 </h6>
               </div>
               <div class="col-md-6">
-                <label class="form-label fw-semibold">Diplôme *</label>
+                <label class="form-label fw-semibold" for="f_diplome">Diplôme *</label>
                 <select name="diplome" id="f_diplome" class="form-select" required>
                   <option value="">-- Choisir --</option>
                   {% for d in diplomes %}
@@ -92,29 +92,29 @@
                 </select>
               </div>
               <div class="col-md-6">
-                <label class="form-label fw-semibold">Spécialité *</label>
+                <label class="form-label fw-semibold" for="f_specialite">Spécialité *</label>
                 <input type="text" name="specialite" id="f_specialite" class="form-control"
                        required placeholder="Ex : Gestion Financière"/>
               </div>
               <div class="col-md-6">
-                <label class="form-label fw-semibold">École / Établissement *</label>
+                <label class="form-label fw-semibold" for="f_ecole">École / Établissement *</label>
                 <input type="text" name="ecole" id="f_ecole" class="form-control"
                        required placeholder="Ex : ENCG Fès"/>
               </div>
               <div class="col-md-6">
-                <label class="form-label fw-semibold">Année d'obtention *</label>
+                <label class="form-label fw-semibold" for="f_promotion">Année d'obtention *</label>
                 <input type="number" name="promotion" id="f_promotion" class="form-control"
                        min="1990" max="2024" value="2020" required/>
               </div>
 
               <!-- Expérience -->
               <div class="col-12 mt-2">
-                <h6 class="fw-bold" style="color:var(--ader-bleu);">
+                <h6 class="fw-bold" style="color:var(--vert);">
                   <i class="fas fa-clock me-1"></i> Expérience professionnelle
                 </h6>
               </div>
               <div class="col-md-6">
-                <label class="form-label fw-semibold">Années d'expérience *</label>
+                <label class="form-label fw-semibold" for="f_experience">Années d'expérience *</label>
                 <input type="number" name="experience" id="f_experience" class="form-control"
                        min="0" max="40" value="0" required/>
               </div>
@@ -174,7 +174,7 @@ function handleFile(file) {
   }
 
   // Afficher le nom du fichier
-  zone.innerHTML = `<i class="fas fa-file-pdf fa-2x mb-2" style="color:var(--ader-or);"></i>
+  zone.innerHTML = `<i class="fas fa-file-pdf fa-2x mb-2" style="color:var(--orange);"></i>
     <p class="mb-0 fw-bold">${file.name}</p>
     <small class="text-success"><i class="fas fa-check me-1"></i>Fichier chargé — extraction en cours...</small>`;
 

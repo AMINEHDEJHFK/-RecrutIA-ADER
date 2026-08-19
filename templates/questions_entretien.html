@@ -1,0 +1,166 @@
+{% extends "base.html" %}
+{% block title %}Questions d'entretien IA — {{ candidat.prenom }} {{ candidat.nom }}{% endblock %}
+
+{% block content %}
+<div style="background:var(--fond);border-bottom:1px solid var(--gris-clair);padding:16px 0;margin-bottom:28px;">
+  <div class="container-xl px-4">
+    <nav class="mb-1">
+      <small>
+        <a href="{{ url_for('detail_candidat', candidat_id=candidat.id) }}" style="color:var(--vert);">
+          {{ candidat.prenom }} {{ candidat.nom }}
+        </a> / Questions d'entretien
+      </small>
+    </nav>
+    <div class="section-label"><i class="fas fa-robot me-1"></i>Intelligence Artificielle — Génération automatique</div>
+    <h2 class="fw-bold mb-0" style="color:var(--vert);font-size:1.3rem;">
+      Questions d'entretien personnalisées
+    </h2>
+    <small class="text-muted">Générées par IA selon le profil de {{ candidat.prenom }} {{ candidat.nom }} pour le poste {{ candidat.poste }}</small>
+  </div>
+</div>
+
+<div class="container-xl px-4 pb-5">
+  <div class="row g-4">
+
+    <!-- Profil résumé -->
+    <div class="col-lg-3">
+      <div class="card mb-3">
+        <div class="card-header-ader">
+          <h6 class="mb-0"><i class="fas fa-user me-1"></i>Profil</h6>
+        </div>
+        <div class="card-body p-3">
+          <div class="fw-bold">{{ candidat.prenom }} {{ candidat.nom }}</div>
+          <div class="text-muted small mb-2">{{ candidat.poste }}</div>
+          <table class="table table-sm mb-0">
+            <tr><td class="text-muted" style="font-size:.76rem;">Diplôme</td><td class="small fw-semibold">{{ candidat.diplome }}</td></tr>
+            <tr><td class="text-muted" style="font-size:.76rem;">Spécialité</td><td class="small fw-semibold">{{ candidat.specialite }}</td></tr>
+            <tr><td class="text-muted" style="font-size:.76rem;">Expérience</td><td class="small fw-semibold">{{ candidat.experience }} an(s)</td></tr>
+            <tr><td class="text-muted" style="font-size:.76rem;">Score IA</td>
+                <td class="small fw-semibold" style="color:var(--vert);">{{ (candidat.score_ia*100)|round(1) }}%</td></tr>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-body p-3">
+          <div class="fw-bold mb-2" style="font-size:.82rem;color:var(--vert);">
+            <i class="fas fa-tags me-1"></i>Catégories
+          </div>
+          <div class="d-flex flex-column gap-1">
+            <span style="background:#EEF3FF;color:#3730A3;border-radius:3px;padding:4px 10px;font-size:.75rem;font-weight:600;">
+              <i class="fas fa-cogs me-1"></i>3 Questions techniques
+            </span>
+            <span style="background:#E8F5EE;color:var(--vert);border-radius:3px;padding:4px 10px;font-size:.75rem;font-weight:600;">
+              <i class="fas fa-briefcase me-1"></i>3 Questions parcours
+            </span>
+            <span style="background:#FEF0E6;color:var(--orange);border-radius:3px;padding:4px 10px;font-size:.75rem;font-weight:600;">
+              <i class="fas fa-star me-1"></i>2 Questions motivation
+            </span>
+            <span style="background:#F3F4F6;color:#374151;border-radius:3px;padding:4px 10px;font-size:.75rem;font-weight:600;">
+              <i class="fas fa-landmark me-1"></i>2 Questions ADER / secteur
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Questions générées -->
+    <div class="col-lg-9">
+      {% if not has_api_key %}
+      <div class="alert alert-warning mb-4">
+        <i class="fas fa-key me-2"></i>
+        <strong>Clé API manquante.</strong>
+        Pour activer la génération IA, ajoutez <code>ANTHROPIC_API_KEY=votre_clé</code> dans le fichier <code>.env</code>.
+        <br><small class="mt-1 d-block">Obtenez une clé sur <strong>console.anthropic.com</strong></small>
+      </div>
+      {% endif %}
+
+      {% if questions %}
+      <div class="card">
+        <div class="card-header-ader d-flex justify-content-between align-items-center">
+          <h5 class="mb-0"><i class="fas fa-comments me-2"></i>10 Questions générées par IA</h5>
+          <button onclick="window.print()" class="btn btn-sm"
+                  style="background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3);font-size:.75rem;">
+            <i class="fas fa-print me-1"></i>Imprimer
+          </button>
+        </div>
+        <div class="card-body p-4">
+          <div class="alert alert-info py-2 mb-4" style="font-size:.8rem;">
+            <i class="fas fa-info-circle me-1"></i>
+            Ces questions sont générées automatiquement selon le profil du candidat. Le jury peut les adapter librement.
+          </div>
+          <ol style="padding-left:20px;">
+            {% for line in questions.split('\n') %}
+            {% set stripped = line.strip() %}
+            {% if stripped and stripped[0].isdigit() %}
+            {% set q = stripped.lstrip('0123456789. )') | trim %}
+            <li style="margin-bottom:16px;padding:12px 14px;background:var(--fond);border-left:3px solid var(--vert);border-radius:0 4px 4px 0;font-size:.88rem;line-height:1.5;">
+              {{ q }}
+            </li>
+            {% endif %}
+            {% endfor %}
+          </ol>
+        </div>
+      </div>
+
+      {% elif has_api_key %}
+      <div class="card">
+        <div class="card-body text-center py-5">
+          <i class="fas fa-exclamation-triangle fa-3x mb-3" style="color:var(--orange);"></i>
+          <h5 class="fw-bold text-muted">Erreur lors de la génération</h5>
+          <p class="text-muted small">Vérifiez votre connexion internet et votre clé API Anthropic.</p>
+        </div>
+      </div>
+
+      {% else %}
+      <!-- Pas de clé API : afficher des questions modèles -->
+      <div class="card">
+        <div class="card-header-ader">
+          <h5 class="mb-0"><i class="fas fa-list-ol me-2"></i>Questions modèles (sans IA)</h5>
+        </div>
+        <div class="card-body p-4">
+          <div class="alert alert-warning py-2 mb-4" style="font-size:.8rem;">
+            <i class="fas fa-robot me-1"></i>
+            Questions génériques affichées. Ajoutez une clé API pour des questions personnalisées au profil du candidat.
+          </div>
+          <ol style="padding-left:20px;">
+            {% set questions_modeles = [
+              "Pouvez-vous nous présenter votre parcours académique et professionnel en lien avec le poste de " ~ candidat.poste ~ " ?",
+              "Quelles compétences spécifiques en " ~ candidat.specialite ~ " pensez-vous apporter à l'ADER ?",
+              "Décrivez une situation professionnelle difficile que vous avez gérée et comment vous l'avez résolue.",
+              "Quelle est votre connaissance des missions de l'Agence de Développement Régional de Fès-Meknès ?",
+              "Pourquoi souhaitez-vous rejoindre le secteur public plutôt que le secteur privé ?",
+              "Comment organisez-vous votre travail face à des délais serrés et des priorités multiples ?",
+              "Quelles sont vos attentes en termes d'évolution de carrière au sein de l'ADER ?",
+              "Avez-vous une expérience avec des outils de gestion ou des logiciels utilisés dans votre domaine ?",
+              "Comment définissez-vous le travail en équipe et quelle est votre expérience dans ce domaine ?",
+              "Quelle valeur ajoutée pensez-vous apporter à l'ADER par rapport à votre expérience de " ~ candidat.experience ~ " an(s) ?"
+            ] %}
+            {% for q in questions_modeles %}
+            <li style="margin-bottom:16px;padding:12px 14px;background:var(--fond);border-left:3px solid var(--gris-clair);border-radius:0 4px 4px 0;font-size:.88rem;line-height:1.5;">
+              {{ q }}
+            </li>
+            {% endfor %}
+          </ol>
+        </div>
+      </div>
+      {% endif %}
+
+      <div class="mt-3 d-flex gap-2">
+        <a href="{{ url_for('detail_candidat', candidat_id=candidat.id) }}" class="btn btn-outline-secondary">
+          <i class="fas fa-arrow-left me-1"></i>Retour
+        </a>
+        <a href="{{ url_for('explication_ia', candidat_id=candidat.id) }}" class="btn-ader"
+           style="border-radius:3px;padding:8px 18px;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:6px;">
+          <i class="fas fa-chart-bar"></i>Voir explication score IA
+        </a>
+        <a href="{{ url_for('entretien_jury', candidat_id=candidat.id) }}" class="btn-or"
+           style="border-radius:3px;padding:8px 18px;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:6px;">
+          <i class="fas fa-users"></i>Lancer l'entretien jury
+        </a>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
