@@ -10,3 +10,4 @@ gunicorn
 shap
 anthropic
 python-dotenv
+psycopg2-binary
