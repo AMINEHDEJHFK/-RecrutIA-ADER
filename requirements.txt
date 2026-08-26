@@ -7,3 +7,6 @@ pdfplumber
 openpyxl
 werkzeug
 gunicorn
+shap
+anthropic
+python-dotenv

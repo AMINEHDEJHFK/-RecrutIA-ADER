@@ -65,8 +65,10 @@
             <tr><td class="text-muted" style="font-size:.78rem;">Promotion</td><td class="small fw-semibold">{{ candidat.promotion }}</td></tr>
           </table>
           <div class="mt-3">
-            {% if candidat.score_ia >= 0.5 %}
+            {% if candidat.decision == "Présélectionné" %}
             <span class="badge-presel">Présélectionné</span>
+            {% elif candidat.decision == "À examiner" %}
+            <span class="badge-presel" style="background:#E66210;">À examiner</span>
             {% else %}
             <span class="badge-nonret">Non retenu</span>
             {% endif %}

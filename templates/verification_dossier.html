@@ -148,7 +148,7 @@
                   <button type="button" class="toggle-btn oui" onclick="setDoc('autres', true, this)">Conforme</button>
                   <button type="button" class="toggle-btn non" onclick="setDoc('autres', false, this)">Non conforme</button>
                 </div>
-                <input type="hidden" name="autres_conformes" id="autres_conformes"
+                <input type="hidden" name="autres_conformes" id="autres_conforme"
                        value="{{ '1' if candidat.verification and candidat.verification.autres_conformes else '0' }}">
               </div>
             </div>
@@ -158,7 +158,7 @@
               <div class="col-md-6">
                 <label class="form-label fw-semibold" style="font-size:.82rem;" for="f_verificateur">Nom du vérificateur <span class="text-danger">*</span></label>
                 <input id="f_verificateur" type="text" name="verificateur" class="form-control"
-                       value="{{ candidat.verification.verificateur if candidat.verification else '' }}"
+                       value="{{ candidat.verification.verificateur if candidat.verification else session.get('user_nom', '') }}"
                        placeholder="Nom et prénom" required>
               </div>
               <div id="result-preview" class="col-md-6 d-flex align-items-end">
@@ -202,7 +202,9 @@
     autres:     '{{ "1" if candidat.verification and candidat.verification.autres_conformes else ("0" if candidat.verification else "1") }}',
   };
   Object.entries(saved).forEach(([key, val]) => {
-    const row = document.getElementById(key + '_conforme').closest('.doc-check-row');
+    const input = document.getElementById(key + '_conforme');
+    input.value = val;
+    const row = input.closest('.doc-check-row');
     const btn = row.querySelector(val === '1' ? '.toggle-btn.oui' : '.toggle-btn.non');
     if (btn) btn.classList.add('active');
   });

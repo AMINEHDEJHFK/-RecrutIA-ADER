@@ -20,26 +20,32 @@
 <div class="container-xl px-4">
 
   <!-- STATS -->
-  <div class="row g-3 mb-4">
-    <div class="col-md-3">
+  <div class="row g-3 mb-4 row-cols-2 row-cols-md-5">
+    <div class="col">
       <div class="stat-card text-center">
         <div class="stat-number">{{ stats.total }}</div>
         <div class="stat-label">Total candidatures</div>
       </div>
     </div>
-    <div class="col-md-3">
+    <div class="col">
       <div class="stat-card text-center">
         <div class="stat-number">{{ stats.preselectionnes }}</div>
         <div class="stat-label">Présélectionnés</div>
       </div>
     </div>
-    <div class="col-md-3">
+    <div class="col">
+      <div class="stat-card orange text-center">
+        <div class="stat-number orange">{{ stats.a_examiner }}</div>
+        <div class="stat-label">À examiner</div>
+      </div>
+    </div>
+    <div class="col">
       <div class="stat-card rouge text-center">
         <div class="stat-number rouge">{{ stats.non_retenus }}</div>
         <div class="stat-label">Non retenus</div>
       </div>
     </div>
-    <div class="col-md-3">
+    <div class="col">
       <div class="stat-card orange text-center">
         <div class="stat-number orange">{{ stats.taux }}%</div>
         <div class="stat-label">Taux de présélection</div>
@@ -132,6 +138,11 @@
           </div>
           <div style="width:1px;background:#F0F4F8;"></div>
           <div class="text-center">
+            <div style="font-size:1.25rem;font-weight:800;color:#E66210;">{{ stats.a_examiner }}</div>
+            <div style="font-size:.7rem;color:#94A3B8;font-weight:600;">À examiner</div>
+          </div>
+          <div style="width:1px;background:#F0F4F8;"></div>
+          <div class="text-center">
             <div style="font-size:1.25rem;font-weight:800;color:#EF4444;">{{ stats.non_retenus }}</div>
             <div style="font-size:.7rem;color:#94A3B8;font-weight:600;">Non retenus</div>
           </div>
@@ -206,6 +217,7 @@
         <select id="filterDecision" class="form-select">
           <option value="">Toutes décisions</option>
           <option value="Présélectionné">Présélectionnés</option>
+          <option value="À examiner">À examiner</option>
           <option value="Non retenu">Non retenus</option>
         </select>
       </div>
@@ -261,6 +273,8 @@
               <td>
                 {% if c.decision == "Présélectionné" %}
                   <span class="badge bg-success"><i class="fas fa-check me-1"></i>Présélectionné</span>
+                {% elif c.decision == "À examiner" %}
+                  <span class="badge" style="background:#E66210;"><i class="fas fa-exclamation-triangle me-1"></i>À examiner</span>
                 {% else %}
                   <span class="badge bg-danger"><i class="fas fa-times me-1"></i>Non retenu</span>
                 {% endif %}
@@ -293,10 +307,11 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 // ── Données brutes ────────────────────────────────────────────
-const presel   = {{ stats.preselectionnes }};
-const nonRet   = {{ stats.non_retenus }};
-const total    = {{ stats.total }};
-const taux     = {{ stats.taux }};
+const presel     = {{ stats.preselectionnes }};
+const aExaminer  = {{ stats.a_examiner }};
+const nonRet     = {{ stats.non_retenus }};
+const total      = {{ stats.total }};
+const taux       = {{ stats.taux }};
 
 const diplomes = {};
 const postesMap = {};
@@ -311,15 +326,17 @@ const scores   = [];
 const ctxD = document.getElementById('chartDecision').getContext('2d');
 const gradGreen = ctxD.createLinearGradient(0,0,0,200);
 gradGreen.addColorStop(0,'#34D399'); gradGreen.addColorStop(1,'#059669');
+const gradOrange = ctxD.createLinearGradient(0,0,0,200);
+gradOrange.addColorStop(0,'#FB923C'); gradOrange.addColorStop(1,'#E66210');
 const gradRed = ctxD.createLinearGradient(0,0,0,200);
 gradRed.addColorStop(0,'#F87171'); gradRed.addColorStop(1,'#DC2626');
 
 new Chart(ctxD, {
   type: 'doughnut',
   data: {
-    labels: ['Présélectionnés','Non retenus'],
-    datasets: [{ data: [presel, nonRet],
-      backgroundColor: [gradGreen, gradRed],
+    labels: ['Présélectionnés','À examiner','Non retenus'],
+    datasets: [{ data: [presel, aExaminer, nonRet],
+      backgroundColor: [gradGreen, gradOrange, gradRed],
       borderWidth: 3, borderColor: '#fff', hoverOffset: 10
     }]
   },
