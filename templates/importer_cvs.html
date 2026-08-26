@@ -61,6 +61,8 @@
                     <td>
                       {% if r.decision == "Présélectionné" %}
                         <span class="badge bg-success">Présélectionné</span>
+                      {% elif r.decision == "À examiner" %}
+                        <span class="badge" style="background:#E66210;">À examiner</span>
                       {% else %}
                         <span class="badge bg-danger">Non retenu</span>
                       {% endif %}

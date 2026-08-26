@@ -1,12 +1,11 @@
 {% extends "base_auth.html" %}
-{% block title %}Connexion RH - RecrutIA{% endblock %}
+{% block title %}Nouveau mot de passe - RecrutIA{% endblock %}
 
 {% block extra_css %}
 <style>
   .auth-shell { min-height: 100vh; display: flex; }
   @media (max-width: 900px) { .auth-shell { flex-direction: column; } }
 
-  /* ── Panneau gauche — institutionnel ── */
   .auth-brand {
     flex: 0 0 56%;
     position: relative;
@@ -43,17 +42,6 @@
   .auth-brand-mid h1 { font-size: 2.2rem; font-weight: 800; line-height: 1.2; margin: 0 0 18px; }
   .auth-brand-mid p { font-size: .95rem; color: rgba(255,255,255,.72); line-height: 1.65; margin: 0; }
 
-  .auth-brand-stats {
-    position: relative; display: flex; gap: 40px; padding-top: 28px;
-    border-top: 1px solid rgba(255,255,255,.15); flex-wrap: wrap;
-  }
-  .auth-brand-stats .num { font-size: 1.4rem; font-weight: 800; color: #fff; }
-  .auth-brand-stats .lbl {
-    font-size: .66rem; color: rgba(255,255,255,.55); text-transform: uppercase;
-    letter-spacing: .05em; margin-top: 2px;
-  }
-
-  /* ── Panneau droit — formulaire ── */
   .auth-form-panel {
     flex: 1; display: flex; align-items: center; justify-content: center;
     padding: 40px 24px; background: var(--fond);
@@ -75,6 +63,7 @@
   }
   .auth-field .form-control:focus ~ .input-group-text,
   .auth-field .input-group:focus-within .input-group-text { border-color: var(--vert); color: var(--vert); }
+  .auth-field-hint { font-size: .72rem; color: var(--gris-moyen); margin-top: 6px; }
 
   .btn-auth-submit {
     display: flex; align-items: center; justify-content: center; gap: 8px;
@@ -84,16 +73,17 @@
   }
   .btn-auth-submit:hover { background: var(--vert-fonce); color: #fff; }
 
-  .auth-forgot-link { font-size: .78rem; color: var(--gris-moyen); text-decoration: none; }
-  .auth-forgot-link:hover { color: var(--vert); text-decoration: underline; }
-
+  .auth-back-link {
+    display: inline-flex; align-items: center; gap: 6px; font-size: .82rem;
+    color: var(--gris-moyen); text-decoration: none; margin-top: 22px;
+  }
+  .auth-back-link:hover { color: var(--vert); }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="auth-shell">
 
-  <!-- Panneau institutionnel -->
   <div class="auth-brand">
     <div class="auth-brand-top">
       <div class="logo-card"><img src="/static/img/logo_ader.png" alt="ADER Fès"/></div>
@@ -106,22 +96,18 @@
 
     <div class="auth-brand-mid">
       <span class="auth-brand-badge">Espace réservé au personnel</span>
-      <h1>Présélection intelligente,<br/>décision humaine.</h1>
-      <p>Plateforme interne de présélection des candidatures pour l'Agence de Développement Régional de Fès — scoring explicable, conforme au cadre du recrutement public marocain.</p>
+      <h1>Choisissez un nouveau<br/>mot de passe.</h1>
+      <p>Votre lien de réinitialisation est valide. Définissez un nouveau mot de passe
+         d'au moins 8 caractères pour sécuriser votre compte.</p>
     </div>
 
-    <div class="auth-brand-stats">
-      <div><div class="num">77%</div><div class="lbl">Précision du modèle</div></div>
-      <div><div class="num">&lt;1s</div><div class="lbl">Temps de présélection</div></div>
-      <div><div class="num">100%</div><div class="lbl">Décisions explicables</div></div>
-    </div>
+    <div></div>
   </div>
 
-  <!-- Panneau formulaire -->
   <div class="auth-form-panel">
     <div class="auth-form-box">
-      <h2>Connexion</h2>
-      <p class="lead-muted">Accédez à votre espace RH.</p>
+      <h2>Nouveau mot de passe</h2>
+      <p class="lead-muted">Choisissez un mot de passe robuste.</p>
 
       {% with messages = get_flashed_messages(with_categories=true) %}
         {% for cat, msg in messages %}
@@ -129,31 +115,32 @@
         {% endfor %}
       {% endwith %}
 
-      <form method="POST" action="/login">
+      <form method="POST" action="{{ url_for('reinitialiser_mot_de_passe', token=token) }}">
         <div class="auth-field mb-3">
-          <label for="f_username">Identifiant</label>
-          <div class="input-group">
-            <span class="input-group-text"><i class="fas fa-user"></i></span>
-            <input type="text" name="username" id="f_username" class="form-control"
-                   placeholder="Votre identifiant" required autofocus/>
-          </div>
-        </div>
-        <div class="auth-field mb-3">
-          <label for="f_password">Mot de passe</label>
+          <label for="f_password">Nouveau mot de passe</label>
           <div class="input-group">
             <span class="input-group-text"><i class="fas fa-key"></i></span>
             <input type="password" name="password" id="f_password" class="form-control"
-                   placeholder="Votre mot de passe" required/>
+                   placeholder="Minimum 8 caractères" required minlength="8" autofocus/>
           </div>
-          <div class="text-end mt-2">
-            <a href="{{ url_for('mot_de_passe_oublie') }}" class="auth-forgot-link">Mot de passe oublié ?</a>
+        </div>
+        <div class="auth-field mb-3">
+          <label for="f_confirmation">Confirmer le mot de passe</label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="fas fa-key"></i></span>
+            <input type="password" name="confirmation" id="f_confirmation" class="form-control"
+                   placeholder="Retapez le mot de passe" required minlength="8"/>
           </div>
         </div>
 
         <button type="submit" class="btn-auth-submit">
-          Se connecter <i class="fas fa-arrow-right"></i>
+          Réinitialiser <i class="fas fa-check"></i>
         </button>
       </form>
+
+      <a href="{{ url_for('login') }}" class="auth-back-link">
+        <i class="fas fa-arrow-left"></i> Retour à la connexion
+      </a>
     </div>
   </div>
 

@@ -2,7 +2,7 @@
 RecrutIA - Application Flask de recrutement intelligent pour ADER Fes
 """
 
-import os, pickle, re, io
+import os, pickle, re, io, secrets, unicodedata
 from functools import wraps
 from dotenv import load_dotenv
 load_dotenv()
@@ -13,7 +13,7 @@ from flask import (Flask, render_template, request, redirect,
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
-from datetime import datetime
+from datetime import datetime, timedelta
 
 # ─── CONFIGURATION ─────────────────────────────────────────────────────────────
 
@@ -73,7 +73,7 @@ def charger_ou_entrainer_modele():
 
     niveau_map = {"DOCTORAT":5,"MASTER":4,"LICENCE":3,"TECHNICIEN SPECIALISE":2,"TECHNICIEN":1,"BAC":0}
     df["niveau_diplome"] = df["diplome"].map(niveau_map).fillna(1)
-    df["annee_diplome_anciennete"] = 2024 - df["promotion"]
+    df["annee_diplome_anciennete"] = datetime.now().year - df["promotion"]
 
     le_poste      = LabelEncoder()
     le_ecole      = LabelEncoder()
@@ -128,6 +128,11 @@ class Candidat(db.Model):
     experience   = db.Column(db.Integer)
     score_ia     = db.Column(db.Float)
     decision     = db.Column(db.String(20))
+    decision_manuelle      = db.Column(db.Boolean, default=False)
+    decideur_manuel         = db.Column(db.String(150))
+    date_decision_manuelle  = db.Column(db.DateTime)
+    langues      = db.Column(db.String(200))
+    competences  = db.Column(db.Text)
     cv_filename  = db.Column(db.String(200))
     date_depot   = db.Column(db.DateTime, default=datetime.utcnow)
     offre_id     = db.Column(db.Integer, db.ForeignKey('offre.id'), nullable=True)
@@ -158,6 +163,7 @@ class Offre(db.Model):
     langues         = db.Column(db.String(200))
     missions        = db.Column(db.Text)
     competences     = db.Column(db.Text)
+    mots_cles       = db.Column(db.String(500))
     date_limite     = db.Column(db.String(50))
     actif           = db.Column(db.Boolean, default=True)
     date_creation   = db.Column(db.DateTime, default=datetime.utcnow)
@@ -226,10 +232,13 @@ class UtilisateurRH(db.Model):
     nom           = db.Column(db.String(100), nullable=False)
     prenom        = db.Column(db.String(100), nullable=False)
     username      = db.Column(db.String(80), unique=True, nullable=False)
+    email         = db.Column(db.String(150))
     password_hash = db.Column(db.String(256), nullable=False)
     role          = db.Column(db.String(20), default="rh")   # admin | rh | jury
     actif         = db.Column(db.Boolean, default=True)
     date_creation = db.Column(db.DateTime, default=datetime.utcnow)
+    reset_token       = db.Column(db.String(100))
+    reset_token_expire = db.Column(db.DateTime)
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -265,7 +274,7 @@ def encoder_safe(le, valeur):
 def predire(poste, diplome, specialite, ecole, experience, promotion):
     """Lance la prédiction ML et retourne (probabilité, décision)."""
     niveau = DIPLOME_NIVEAU.get(diplome.upper().strip(), 1)
-    anciennete = 2024 - int(promotion)
+    anciennete = datetime.now().year - int(promotion)
 
     features = [[
         encoder_safe(ENCODERS["le_poste"], poste),
@@ -277,8 +286,52 @@ def predire(poste, diplome, specialite, ecole, experience, promotion):
     ]]
 
     proba = RF_MODEL.predict_proba(features)[0][1]
-    decision = "Présélectionné" if proba >= 0.5 else "Non retenu"
+    if proba >= 0.55:
+        decision = "Présélectionné"
+    elif proba >= 0.45:
+        decision = "À examiner"
+    else:
+        decision = "Non retenu"
     return round(proba, 4), decision
+
+
+def couleur_decision(decision):
+    """Couleur hexa associée à une décision, pour l'export Excel."""
+    return {"Présélectionné": "198754", "À examiner": "E66210"}.get(decision, "dc3545")
+
+
+def _normaliser_mot(mot):
+    """Minuscule, sans accents, sans 's' final simple — pour tolérer pluriels/accents à la comparaison."""
+    mot = unicodedata.normalize("NFKD", mot).encode("ascii", "ignore").decode("ascii").lower().strip()
+    if mot.endswith("s") and len(mot) > 3:
+        mot = mot[:-1]
+    return mot
+
+
+def comparer_competences(competences_candidat, competences_offre):
+    """Compare les compétences du CV à celles demandées par l'offre (info, n'influence pas le score).
+    Comparaison tolérante mot-par-mot : ignore accents et pluriels simples (ex: "projets" == "projet")."""
+    requises = [c.strip() for c in (competences_offre or "").split(",") if c.strip()]
+    if not requises:
+        return None
+
+    mots_candidat = {
+        _normaliser_mot(m) for m in re.findall(r"[a-zA-ZÀ-ÿ']+", competences_candidat or "")
+    }
+
+    trouvees, manquantes = [], []
+    for c in requises:
+        mots_requis = [_normaliser_mot(m) for m in re.findall(r"[a-zA-ZÀ-ÿ']+", c)]
+        mots_requis = [m for m in mots_requis if len(m) > 2]
+        ratio = sum(1 for m in mots_requis if m in mots_candidat) / len(mots_requis) if mots_requis else 0
+        (trouvees if ratio >= 0.6 else manquantes).append(c)
+
+    return {
+        "trouvees": trouvees,
+        "manquantes": manquantes,
+        "total": len(requises),
+        "nb_trouvees": len(trouvees),
+    }
 
 
 FEATURE_LABELS = {
@@ -296,7 +349,7 @@ def expliquer_score(candidat):
         import shap
         import numpy as np
         niveau     = DIPLOME_NIVEAU.get(candidat.diplome.upper().strip(), 1)
-        anciennete = 2024 - int(candidat.promotion)
+        anciennete = datetime.now().year - int(candidat.promotion)
         raw = [
             encoder_safe(ENCODERS["le_poste"],      candidat.poste),
             niveau,
@@ -362,18 +415,108 @@ Règles :
         return None
 
 
+def extraire_cv_ia(texte):
+    """Extrait les informations d'un CV via l'API Claude. Retourne None si indisponible/échec."""
+    try:
+        import anthropic as anthropic_sdk
+        import json as json_module
+
+        api_key = os.environ.get("ANTHROPIC_API_KEY")
+        if not api_key:
+            return None
+
+        client = anthropic_sdk.Anthropic(api_key=api_key)
+        prompt = f"""Nous sommes en {datetime.now().year}. Voici le texte extrait d'un CV. Analyse-le et réponds UNIQUEMENT avec un objet JSON valide (sans texte avant/après, sans balises markdown), avec exactement ces champs :
+
+- "nom" : nom de famille
+- "prenom" : prénom
+- "email" : adresse email
+- "telephone" : numéro de téléphone
+- "diplome" : un seul parmi DOCTORAT, MASTER, LICENCE, TECHNICIEN SPECIALISE, TECHNICIEN, BAC (le plus haut diplôme obtenu). Un diplôme d'Ingénieur / Ingénieur d'État compte comme MASTER (niveau Bac+5 équivalent).
+- "specialite" : domaine d'études principal (ex: "Data Science", "Finance", "Génie civil")
+- "ecole" : nom de l'établissement du dernier diplôme
+- "promotion" : année d'obtention du dernier diplôme (nombre entier)
+- "experience" : nombre total d'années d'expérience professionnelle (nombre entier). Pour un poste marqué "en cours"/"présent"/"aujourd'hui", calcule jusqu'à l'année actuelle ({datetime.now().year}), pas une date antérieure.
+- "langues" : langues parlées, séparées par des virgules (ex: "Français, Arabe, Anglais")
+- "competences" : compétences techniques et mots-clés clés du CV (logiciels, méthodes, domaines maîtrisés), séparés par des virgules (ex: "Excel, gestion de projet, marchés publics")
+
+Si une information est absente du CV, mets une chaîne vide "" (ou 0 pour les nombres).
+
+Texte du CV :
+{texte[:6000]}"""
+
+        message = client.messages.create(
+            model="claude-sonnet-4-6",
+            max_tokens=500,
+            messages=[{"role": "user", "content": prompt}]
+        )
+        reponse = message.content[0].text.strip()
+        reponse = re.sub(r"^```(?:json)?|```$", "", reponse, flags=re.MULTILINE).strip()
+        data = json_module.loads(reponse)
+
+        return {
+            "nom":        str(data.get("nom", "")).strip().upper(),
+            "prenom":     str(data.get("prenom", "")).strip().capitalize(),
+            "email":      str(data.get("email", "")).strip(),
+            "telephone":  str(data.get("telephone", "")).strip(),
+            "diplome":    str(data.get("diplome", "")).strip().upper(),
+            "specialite": str(data.get("specialite", "")).strip(),
+            "ecole":      str(data.get("ecole", "")).strip(),
+            "promotion":  int(data.get("promotion") or 2020),
+            "experience": int(data.get("experience") or 0),
+            "langues":     str(data.get("langues", "")).strip(),
+            "competences": str(data.get("competences", "")).strip(),
+        }
+    except Exception as e:
+        print(f"Erreur extraction CV via IA : {e}")
+        return None
+
+
+def extraire_mots_cles_offre(competences_texte):
+    """Condense le paragraphe de compétences d'une offre en mots-clés courts via l'IA."""
+    if not competences_texte or not competences_texte.strip():
+        return ""
+    try:
+        import anthropic as anthropic_sdk
+
+        api_key = os.environ.get("ANTHROPIC_API_KEY")
+        if not api_key:
+            return ""
+
+        client = anthropic_sdk.Anthropic(api_key=api_key)
+        prompt = f"""Voici les compétences requises pour un poste, extraites d'une annonce de recrutement. Résume-les en une liste courte de mots-clés (5 à 8 maximum), chacun de 2 à 4 mots, sans phrase complète, sans numérotation, séparés uniquement par des virgules. Réponds UNIQUEMENT avec la liste, rien d'autre.
+
+Texte :
+{competences_texte[:3000]}"""
+
+        message = client.messages.create(
+            model="claude-sonnet-4-6",
+            max_tokens=200,
+            messages=[{"role": "user", "content": prompt}]
+        )
+        return message.content[0].text.strip()
+    except Exception as e:
+        print(f"Erreur extraction mots-clés offre : {e}")
+        return ""
+
+
 def extraire_cv(filepath):
-    """Extrait les informations clés d'un CV PDF."""
+    """Extrait les informations clés d'un CV PDF (IA en priorité, règles en secours)."""
     infos = {
         "nom": "", "prenom": "", "email": "", "telephone": "",
         "diplome": "", "specialite": "", "ecole": "",
         "promotion": 2020, "experience": 0,
+        "langues": "", "competences": "",
     }
     try:
         with pdfplumber.open(filepath) as pdf:
             texte = "\n".join(
                 page.extract_text() or "" for page in pdf.pages
             )
+
+        infos_ia = extraire_cv_ia(texte)
+        if infos_ia:
+            return infos_ia
 
         lignes = [l.strip() for l in texte.split("\n") if l.strip()]
 
@@ -400,16 +543,23 @@ def extraire_cv(filepath):
 
         # ── Diplôme ──────────────────────────────────────────────────────────
         diplome_map = {
-            "doctorat": "DOCTORAT",
+            "doctorat": "DOCTORAT", "phd": "DOCTORAT", "ph.d": "DOCTORAT", "doctorate": "DOCTORAT",
             "master 2": "MASTER", "master2": "MASTER", "mater 2": "MASTER",
             "master 1": "MASTER", "master": "MASTER", "msc": "MASTER",
-            "licence": "LICENCE", "bachelor": "LICENCE",
+            "mastère": "MASTER", "mastere": "MASTER",
+            "ingénieur d'état": "MASTER", "ingenieur d'etat": "MASTER",
+            "diplôme d'ingénieur": "MASTER", "ingénieur": "MASTER", "ingenieur": "MASTER",
+            "engineering degree": "MASTER", "bachelor of engineering": "MASTER",
+            "master of engineering": "MASTER", "beng": "MASTER", "meng": "MASTER",
+            "licence": "LICENCE", "bachelor": "LICENCE", "bachelor's degree": "LICENCE",
+            "bachelor of science": "LICENCE", "bsc": "LICENCE",
             "technicien specialise": "TECHNICIEN SPECIALISE",
             "technicien spécialisé": "TECHNICIEN SPECIALISE",
             "technicien": "TECHNICIEN",
             "dut": "TECHNICIEN SPECIALISE",
             "bts": "TECHNICIEN SPECIALISE",
-            "bac": "BAC",
+            "associate degree": "TECHNICIEN SPECIALISE",
+            "bac": "BAC", "high school diploma": "BAC",
         }
         texte_lower = texte.lower()
         for mot, valeur in diplome_map.items():
@@ -452,10 +602,20 @@ def extraire_cv(filepath):
                 infos["ecole"] = valeur
                 break
 
-        # ── Promotion (dernière année mentionnée) ────────────────────────────
-        annees = re.findall(r"\b(20[0-2]\d)\b", texte)
-        if annees:
-            infos["promotion"] = int(sorted(annees)[-1])
+        # ── Promotion (année du diplôme) ──────────────────────────────────────
+        # Priorité : une année juste à côté d'un mot lié au diplôme (fiable),
+        # sinon repli sur la dernière année mentionnée dans tout le texte (moins fiable,
+        # car ça peut confondre avec une date d'expérience professionnelle récente).
+        m = re.search(
+            r"(?:diplômé[e]?\s+en|promotion|obtenu[e]?\s+en|dipl[oô]me\s+obtenu\s+en)\s*:?\s*(20[0-2]\d)",
+            texte, re.IGNORECASE
+        )
+        if m:
+            infos["promotion"] = int(m.group(1))
+        else:
+            annees = re.findall(r"\b(20[0-2]\d)\b", texte)
+            if annees:
+                infos["promotion"] = int(sorted(annees)[-1])
 
         # ── Expérience totale : calcul depuis les dates d'emploi ─────────────
         # Cherche patterns "Mois AAAA - Mois AAAA" ou "AAAA - AAAA"
@@ -464,12 +624,13 @@ def extraire_cv(filepath):
             r"juillet|août|septembre|octobre|novembre|décembre)\s+)?(\d{4}|aujourd'hui|présent|actuel)",
             texte, re.IGNORECASE
         )
+        annee_courante = datetime.now().year
         total_mois = 0
         for debut, fin in periodes:
             try:
                 d = int(debut)
-                f = 2024 if fin.lower() in ["aujourd'hui", "présent", "actuel"] else int(fin)
-                if 1990 <= d <= 2024 and d <= f:
+                f = annee_courante if fin.lower() in ["aujourd'hui", "présent", "actuel"] else int(fin)
+                if 1990 <= d <= annee_courante and d <= f:
                     total_mois += (f - d) * 12
             except:
                 pass
@@ -492,7 +653,9 @@ def extraire_cv(filepath):
 def index():
     if session.get("rh_logged_in"):
         return redirect(url_for("dashboard"))
-    return redirect(url_for("login"))
+    nb_candidatures = Candidat.query.count()
+    nb_postes = Offre.query.count()
+    return render_template("index.html", nb_candidatures=nb_candidatures, nb_postes=nb_postes)
 
 
 # ── Candidat : dépôt de candidature ──────────────────────────────────────────
@@ -532,7 +695,9 @@ def login():
     if request.method == "POST":
         username = request.form.get("username", "").strip()
         password = request.form.get("password", "")
-        user = UtilisateurRH.query.filter_by(username=username, actif=True).first()
+        user = UtilisateurRH.query.filter(
+            (UtilisateurRH.username == username) | (UtilisateurRH.email == username)
+        ).filter_by(actif=True).first()
         if user and user.check_password(password):
             session["rh_logged_in"] = True
             session["user_id"]      = user.id
@@ -549,6 +714,100 @@ def logout():
     session.clear()
     flash("Vous êtes déconnecté.", "info")
     return redirect(url_for("login"))
+
+
+@app.route("/mot-de-passe-oublie", methods=["GET", "POST"])
+def mot_de_passe_oublie():
+    if request.method == "POST":
+        identifiant = request.form.get("identifiant", "").strip()
+        user = UtilisateurRH.query.filter(
+            (UtilisateurRH.username == identifiant) | (UtilisateurRH.email == identifiant)
+        ).filter_by(actif=True).first()
+
+        if user and user.email:
+            import smtplib
+            from email.mime.text import MIMEText
+            from email.mime.multipart import MIMEMultipart
+
+            token = secrets.token_urlsafe(32)
+            user.reset_token = token
+            user.reset_token_expire = datetime.utcnow() + timedelta(minutes=30)
+            db.session.commit()
+
+            SMTP_SERVER = os.environ.get("SMTP_SERVER", "smtp.gmail.com")
+            SMTP_PORT   = int(os.environ.get("SMTP_PORT", 587))
+            SMTP_USER   = os.environ.get("SMTP_USER", "")
+            SMTP_PASS   = os.environ.get("SMTP_PASS", "")
+
+            if SMTP_USER and SMTP_PASS:
+                lien = url_for("reinitialiser_mot_de_passe", token=token, _external=True)
+                try:
+                    msg = MIMEMultipart("alternative")
+                    msg["Subject"] = "RecrutIA ADER — Réinitialisation de votre mot de passe"
+                    msg["From"]    = SMTP_USER
+                    msg["To"]      = user.email
+
+                    corps = f"""
+                    <html><body style="font-family:Arial,sans-serif;color:#1A1A1A;">
+                    <div style="max-width:600px;margin:auto;border:1px solid #eee;border-radius:8px;overflow:hidden;">
+                      <div style="background:#0D5724;padding:20px;text-align:center;">
+                        <h2 style="color:#fff;margin:0;">RecrutIA — ADER Fès</h2>
+                      </div>
+                      <div style="padding:30px;">
+                        <p>Bonjour <strong>{user.prenom} {user.nom}</strong>,</p>
+                        <p>Une demande de réinitialisation de mot de passe a été effectuée pour votre compte.
+                           Cliquez sur le lien ci-dessous pour choisir un nouveau mot de passe
+                           (valable 30 minutes) :</p>
+                        <p style="text-align:center;margin:28px 0;">
+                          <a href="{lien}" style="background:#0D5724;color:#fff;padding:12px 24px;
+                             border-radius:6px;text-decoration:none;font-weight:bold;">
+                             Réinitialiser mon mot de passe</a>
+                        </p>
+                        <p>Si vous n'êtes pas à l'origine de cette demande, ignorez simplement cet email.</p>
+                        <p>Cordialement,<br><strong>RecrutIA — ADER Fès</strong></p>
+                      </div>
+                    </div>
+                    </body></html>
+                    """
+                    msg.attach(MIMEText(corps, "html"))
+                    with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
+                        server.starttls()
+                        server.login(SMTP_USER, SMTP_PASS)
+                        server.sendmail(SMTP_USER, user.email, msg.as_string())
+                except Exception:
+                    pass
+
+        flash("Si un compte correspond à cet identifiant, un email de réinitialisation vient d'être envoyé.", "info")
+        return redirect(url_for("login"))
+
+    return render_template("mot_de_passe_oublie.html")
+
+
+@app.route("/reinitialiser-mot-de-passe/<token>", methods=["GET", "POST"])
+def reinitialiser_mot_de_passe(token):
+    user = UtilisateurRH.query.filter_by(reset_token=token).first()
+    if not user or not user.reset_token_expire or user.reset_token_expire < datetime.utcnow():
+        flash("Ce lien de réinitialisation est invalide ou a expiré.", "danger")
+        return redirect(url_for("mot_de_passe_oublie"))
+
+    if request.method == "POST":
+        password = request.form.get("password", "")
+        confirmation = request.form.get("confirmation", "")
+        if len(password) < 8:
+            flash("Le mot de passe doit contenir au moins 8 caractères.", "danger")
+            return render_template("reinitialiser_mot_de_passe.html", token=token)
+        if password != confirmation:
+            flash("Les deux mots de passe ne correspondent pas.", "danger")
+            return render_template("reinitialiser_mot_de_passe.html", token=token)
+
+        user.set_password(password)
+        user.reset_token = None
+        user.reset_token_expire = None
+        db.session.commit()
+        flash("Votre mot de passe a été réinitialisé. Vous pouvez vous connecter.", "success")
+        return redirect(url_for("login"))
+
+    return render_template("reinitialiser_mot_de_passe.html", token=token)
 
 
 # ── Gestion des utilisateurs RH (admin uniquement) ───────────────────────────
@@ -621,6 +880,7 @@ def dashboard():
     stats = {
         "total": len(candidats),
         "preselectionnes": sum(1 for c in candidats if c.decision == "Présélectionné"),
+        "a_examiner": sum(1 for c in candidats if c.decision == "À examiner"),
         "non_retenus": sum(1 for c in candidats if c.decision == "Non retenu"),
     }
     stats["taux"] = (
@@ -636,9 +896,13 @@ def dashboard():
 @login_required
 def detail_candidat(candidat_id):
     candidat = Candidat.query.get_or_404(candidat_id)
+    match_competences = None
+    if candidat.offre:
+        match_competences = comparer_competences(candidat.competences, candidat.offre.mots_cles)
     return render_template("detail.html",
                            candidat=candidat,
-                           score=round(candidat.score_ia * 100, 1))
+                           score=round(candidat.score_ia * 100, 1),
+                           match_competences=match_competences)
 
 
 def extraire_offre(filepath):
@@ -721,6 +985,7 @@ def offres():
 @login_required
 def creer_offre():
     if request.method == "POST":
+        competences_saisies = request.form.get("competences", "").strip()
         offre = Offre(
             titre          = request.form.get("titre", "").strip(),
             poste          = request.form.get("poste", "").strip(),
@@ -730,7 +995,8 @@ def creer_offre():
             specialite     = request.form.get("specialite", "").strip(),
             langues        = request.form.get("langues", "").strip(),
             missions       = request.form.get("missions", "").strip(),
-            competences    = request.form.get("competences", "").strip(),
+            competences    = competences_saisies,
+            mots_cles      = extraire_mots_cles_offre(competences_saisies),
             date_limite    = request.form.get("date_limite", "").strip(),
             actif          = True,
         )
@@ -764,6 +1030,7 @@ def detail_offre(offre_id):
     stats = {
         "total": len(candidats),
         "preselectionnes": sum(1 for c in candidats if c.decision == "Présélectionné"),
+        "a_examiner": sum(1 for c in candidats if c.decision == "À examiner"),
         "non_retenus": sum(1 for c in candidats if c.decision == "Non retenu"),
     }
     stats["taux"] = round(stats["preselectionnes"] / stats["total"] * 100, 1) if stats["total"] > 0 else 0
@@ -818,6 +1085,8 @@ def importer_cvs(offre_id):
                 experience = int(experience),
                 score_ia   = proba,
                 decision   = decision,
+                langues    = infos.get("langues") or "",
+                competences= infos.get("competences") or "",
                 cv_filename= cv_filename,
                 offre_id   = offre_id,
             )
@@ -894,7 +1163,7 @@ def export_excel():
         ws.cell(row=row, column=11, value=c.experience)
         ws.cell(row=row, column=12, value=round(c.score_ia * 100, 1) if c.score_ia else 0)
         dec_cell = ws.cell(row=row, column=13, value=c.decision)
-        dec_cell.font = Font(color="198754" if c.decision == "Présélectionné" else "dc3545", bold=True)
+        dec_cell.font = Font(color=couleur_decision(c.decision), bold=True)
         ws.cell(row=row, column=14, value=c.date_depot.strftime("%d/%m/%Y") if c.date_depot else "")
 
         if row % 2 == 0:
@@ -948,7 +1217,7 @@ def export_excel_offre(offre_id):
         ws.cell(row=row, column=9, value=c.experience)
         ws.cell(row=row, column=10, value=round(c.score_ia * 100, 1) if c.score_ia else 0)
         dec_cell = ws.cell(row=row, column=11, value=c.decision)
-        dec_cell.font = Font(color="198754" if c.decision == "Présélectionné" else "dc3545", bold=True)
+        dec_cell.font = Font(color=couleur_decision(c.decision), bold=True)
         ws.cell(row=row, column=12, value=c.date_depot.strftime("%d/%m/%Y") if c.date_depot else "")
         if row % 2 == 0:
             for col in range(1, 13):
@@ -1069,6 +1338,35 @@ def modifier_candidat(candidat_id):
     return render_template("modifier_candidat.html", candidat=candidat, diplomes=DIPLOMES)
 
 
+
+
+# ── DÉCISION MANUELLE (candidats « À examiner ») ────────────────────────────
+
+@app.route("/candidat/<int:candidat_id>/decision-manuelle", methods=["POST"])
+@login_required
+def decision_manuelle_route(candidat_id):
+    candidat = Candidat.query.get_or_404(candidat_id)
+
+    if candidat.decision != "À examiner":
+        flash("Cette action n'est possible que pour un candidat « À examiner ».", "warning")
+        return redirect(url_for("detail_candidat", candidat_id=candidat_id))
+
+    action = request.form.get("action")
+    if action == "avancer":
+        candidat.decision = "Présélectionné"
+        flash(f"{candidat.prenom} {candidat.nom} passe en Présélectionné.", "success")
+    elif action == "rejeter":
+        candidat.decision = "Non retenu"
+        flash(f"{candidat.prenom} {candidat.nom} passe en Non retenu.", "info")
+    else:
+        flash("Action inconnue.", "danger")
+        return redirect(url_for("detail_candidat", candidat_id=candidat_id))
+
+    candidat.decision_manuelle      = True
+    candidat.decideur_manuel        = session.get("user_nom", "")
+    candidat.date_decision_manuelle = datetime.utcnow()
+    db.session.commit()
+    return redirect(url_for("detail_candidat", candidat_id=candidat_id))
 
 
 # ── VÉRIFICATION DOSSIER ────────────────────────────────────────────────────

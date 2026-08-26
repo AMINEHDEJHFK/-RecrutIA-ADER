@@ -41,20 +41,24 @@
       </div>
     </div>
     <div class="card-body">
-      <div class="row g-3">
-        <div class="col-md-3 text-center">
+      <div class="row g-3 row-cols-2 row-cols-md-5">
+        <div class="col text-center">
           <div class="fw-bold fs-3" style="color:var(--vert);">{{ stats.total }}</div>
           <small class="text-muted">Total candidats</small>
         </div>
-        <div class="col-md-3 text-center">
+        <div class="col text-center">
           <div class="fw-bold fs-3 text-success">{{ stats.preselectionnes }}</div>
           <small class="text-muted">Présélectionnés</small>
         </div>
-        <div class="col-md-3 text-center">
+        <div class="col text-center">
+          <div class="fw-bold fs-3" style="color:var(--orange);">{{ stats.a_examiner }}</div>
+          <small class="text-muted">À examiner</small>
+        </div>
+        <div class="col text-center">
           <div class="fw-bold fs-3 text-danger">{{ stats.non_retenus }}</div>
           <small class="text-muted">Non retenus</small>
         </div>
-        <div class="col-md-3 text-center">
+        <div class="col text-center">
           <div class="fw-bold fs-3" style="color:var(--orange);">{{ stats.taux }}%</div>
           <small class="text-muted">Taux de présélection</small>
         </div>
@@ -118,6 +122,8 @@
               <td>
                 {% if c.decision == "Présélectionné" %}
                   <span class="badge bg-success"><i class="fas fa-check me-1"></i>Présélectionné</span>
+                {% elif c.decision == "À examiner" %}
+                  <span class="badge" style="background:#E66210;"><i class="fas fa-exclamation-triangle me-1"></i>À examiner</span>
                 {% else %}
                   <span class="badge bg-danger"><i class="fas fa-times me-1"></i>Non retenu</span>
                 {% endif %}

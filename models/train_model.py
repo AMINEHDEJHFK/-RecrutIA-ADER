@@ -37,7 +37,8 @@ diplome_niveau = {
 df["niveau_diplome"] = df["diplome"].map(diplome_niveau).fillna(1)
 
 # Ancienneté du diplôme
-df["annee_diplome_anciennete"] = 2024 - df["promotion"]
+from datetime import datetime
+df["annee_diplome_anciennete"] = datetime.now().year - df["promotion"]
 
 # Encodage des variables catégorielles
 le_poste = LabelEncoder()

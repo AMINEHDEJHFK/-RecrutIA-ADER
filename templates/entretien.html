@@ -370,7 +370,7 @@
           </div>
           <div style="font-size:.72rem;color:var(--gris-moyen);margin-top:6px;">
             Décision IA :
-            <strong class="{% if candidat.decision == 'Présélectionné' %}text-success{% else %}text-danger{% endif %}">
+            <strong class="{% if candidat.decision == 'Présélectionné' %}text-success{% elif candidat.decision == 'À examiner' %}text-warning{% else %}text-danger{% endif %}">
               {{ candidat.decision }}
             </strong>
           </div>

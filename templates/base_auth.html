@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>{% block title %}RecrutIA - ADER Fès{% endblock %}</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
+  <style>
+    :root {
+      --vert:        #0D5724;
+      --vert-fonce:  #094A1D;
+      --vert-clair:  #E8F2EB;
+      --vert-pale:   #F3F8F4;
+      --orange:      #E66210;
+      --orange-clair:#FEF0E6;
+      --noir:        #1A1A1A;
+      --gris-fonce:  #3D4240;
+      --gris-moyen:  #6B7370;
+      --gris-clair:  #E5E7EB;
+      --fond:        #F8F9FA;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; }
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      color: var(--noir);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    .alert { border-radius: 3px; font-size: .875rem; border: none; border-left: 4px solid; }
+    .alert-success { background: #E8F5EE; color: #0D5724; border-left-color: #0D5724; }
+    .alert-danger  { background: #FEECEC; color: #B91C1C; border-left-color: #B91C1C; }
+    .alert-warning { background: #FEF3E6; color: #B45309; border-left-color: #E66210; }
+  </style>
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+{% block content %}{% endblock %}
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

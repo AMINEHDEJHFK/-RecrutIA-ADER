@@ -13,15 +13,7 @@
         <a href="{{ url_for('modifier_candidat', candidat_id=candidat.id) }}" class="btn btn-sm btn-ader">
           <i class="fas fa-user-edit me-1"></i>Modifier
         </a>
-        {% if "lectionn" in candidat.decision %}
-        <a href="{{ url_for('verification_dossier', candidat_id=candidat.id) }}" class="btn btn-sm btn-outline-secondary"
-           style="border-color:var(--orange);color:var(--orange);">
-          <i class="fas fa-folder-open me-1"></i>
-          {% if candidat.verification %}Voir vérification{% else %}Vérifier le dossier{% endif %}
-        </a>
-        <a href="{{ url_for('entretien_jury', candidat_id=candidat.id) }}" class="btn btn-sm btn-or">
-          <i class="fas fa-users me-1"></i>Entretien (4 jurys)
-        </a>
+        {% if candidat.decision == "Présélectionné" or candidat.decision == "À examiner" %}
         <a href="{{ url_for('explication_ia', candidat_id=candidat.id) }}" class="btn btn-sm btn-ader">
           <i class="fas fa-robot me-1"></i>Explication IA
         </a>
@@ -30,7 +22,46 @@
           <i class="fas fa-comments me-1"></i>Questions IA
         </a>
         {% endif %}
+        {% if candidat.decision == "Présélectionné" %}
+        <a href="{{ url_for('verification_dossier', candidat_id=candidat.id) }}" class="btn btn-sm btn-outline-secondary"
+           style="border-color:var(--orange);color:var(--orange);">
+          <i class="fas fa-folder-open me-1"></i>
+          {% if candidat.verification %}Voir vérification{% else %}Vérifier le dossier{% endif %}
+        </a>
+        <a href="{{ url_for('entretien_jury', candidat_id=candidat.id) }}" class="btn btn-sm btn-or">
+          <i class="fas fa-users me-1"></i>Entretien (4 jurys)
+        </a>
+        {% endif %}
       </div>
+
+      {% if candidat.decision == "À examiner" %}
+      <div class="alert alert-warning d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+        <span><i class="fas fa-exclamation-triangle me-2"></i>Ce candidat nécessite une décision manuelle du RH avant de poursuivre.</span>
+        <div class="d-flex gap-2">
+          <form method="POST" action="{{ url_for('decision_manuelle_route', candidat_id=candidat.id) }}" class="d-inline">
+            <input type="hidden" name="action" value="avancer">
+            <button type="submit" class="btn btn-sm btn-success">
+              <i class="fas fa-arrow-right me-1"></i>Faire avancer vers l'entretien
+            </button>
+          </form>
+          <form method="POST" action="{{ url_for('decision_manuelle_route', candidat_id=candidat.id) }}" class="d-inline">
+            <input type="hidden" name="action" value="rejeter">
+            <button type="submit" class="btn btn-sm btn-outline-danger">
+              <i class="fas fa-times me-1"></i>Ne pas retenir
+            </button>
+          </form>
+        </div>
+      </div>
+      {% endif %}
+
+      {% if candidat.decision_manuelle %}
+      <div class="alert alert-info py-2 mb-3" style="font-size:.82rem;">
+        <i class="fas fa-user-check me-1"></i>
+        Décision ajustée manuellement par <strong>{{ candidat.decideur_manuel or "—" }}</strong>
+        le {{ candidat.date_decision_manuelle.strftime('%d/%m/%Y à %H:%M') if candidat.date_decision_manuelle else '—' }}
+        — score IA original conservé : <strong>{{ score }}%</strong>.
+      </div>
+      {% endif %}
 
       <div class="card">
         <div class="card-header-ader d-flex justify-content-between align-items-center">
@@ -40,6 +71,8 @@
           </div>
           {% if candidat.decision == "Présélectionné" %}
             <span class="badge bg-success fs-6"><i class="fas fa-check me-1"></i>Présélectionné</span>
+          {% elif candidat.decision == "À examiner" %}
+            <span class="badge fs-6" style="background:#E66210;"><i class="fas fa-exclamation-triangle me-1"></i>À examiner</span>
           {% else %}
             <span class="badge bg-danger fs-6"><i class="fas fa-times me-1"></i>Non retenu</span>
           {% endif %}
@@ -88,6 +121,45 @@
               </table>
             </div>
           </div>
+
+          {% if candidat.langues or candidat.competences %}
+          <hr/>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <h6 class="fw-bold" style="color:var(--vert);">
+                <i class="fas fa-language me-1"></i>Langues
+              </h6>
+              <p class="mb-0">{{ candidat.langues or '—' }}</p>
+            </div>
+            <div class="col-md-6">
+              <h6 class="fw-bold" style="color:var(--vert);">
+                <i class="fas fa-tools me-1"></i>Compétences (extraites du CV)
+              </h6>
+              <p class="mb-0">{{ candidat.competences or '—' }}</p>
+            </div>
+          </div>
+          {% endif %}
+
+          {% if match_competences %}
+          <hr/>
+          <div class="card" style="border-left:4px solid var(--vert);">
+            <div class="card-body p-3">
+              <h6 class="fw-bold mb-2" style="color:var(--vert);">
+                <i class="fas fa-check-double me-1"></i>Correspondance avec les compétences demandées
+                <span class="badge bg-secondary ms-1">{{ match_competences.nb_trouvees }}/{{ match_competences.total }}</span>
+              </h6>
+              {% for c in match_competences.trouvees %}
+                <span class="badge bg-success me-1 mb-1"><i class="fas fa-check me-1"></i>{{ c }}</span>
+              {% endfor %}
+              {% for c in match_competences.manquantes %}
+                <span class="badge bg-light text-muted border me-1 mb-1">{{ c }}</span>
+              {% endfor %}
+              <div class="mt-2" style="font-size:.72rem;color:var(--gris-moyen);">
+                <i class="fas fa-info-circle me-1"></i>Info indicative — n'influence pas le score IA, utile pour préparer l'entretien.
+              </div>
+            </div>
+          </div>
+          {% endif %}
 
           {% if candidat.entretien %}
           <hr/>
