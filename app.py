@@ -1678,5 +1678,57 @@ def debug_shap(candidat_id):
         return jsonify({"ok": False, "error": str(e), "trace": traceback.format_exc()})
 
 
+@app.route("/init-db-secret-ader2024")
+def init_db_route():
+    try:
+        db.create_all()
+        creer_admin_si_absent()
+
+        # Import données de démonstration si la base est vide
+        if Candidat.query.count() == 0:
+            from werkzeug.security import generate_password_hash
+
+            # Utilisateur jury
+            if not UtilisateurRH.query.filter_by(username="Mohamed_alami").first():
+                db.session.add(UtilisateurRH(
+                    nom="Alami", prenom="Mohamed", username="Mohamed_alami",
+                    password_hash=generate_password_hash("ader2024"),
+                    role="jury", actif=True
+                ))
+
+            # Offres
+            offres_data = [
+                {"id":1,"titre":"(01) Chef de projets Architecte","poste":"(01) Chef de projets Architecte","nombre_postes":1,"diplome_requis":"Architecte","experience_min":1,"specialite":"","langues":"","missions":"Pilote et coordonne les projets ADER","competences":"Maîtrise du marché de réhabilitation","date_limite":"11 Décembre 2024","actif":True},
+                {"id":2,"titre":"(02) Chargé de Communication et Marketing Digital","poste":"(02) Chargé de Communication et Marketing Digital","nombre_postes":2,"diplome_requis":"","experience_min":0,"specialite":"","langues":"Arabe, Français, Anglais","missions":"Elaborer la stratégie de communication","competences":"Communication digitale","date_limite":"","actif":True},
+                {"id":3,"titre":"CGM","poste":"CGM","nombre_postes":1,"diplome_requis":"Master","experience_min":2,"specialite":"","langues":"","missions":"","competences":"","date_limite":"","actif":True},
+                {"id":4,"titre":"(04) Assistant(e) Architecte","poste":"Assistant Architecte","nombre_postes":1,"diplome_requis":"Licence en Architecture","experience_min":1,"specialite":"Architecture","langues":"Arabe, Français","missions":"Assister l'architecte dans le suivi des projets","competences":"AutoCAD, dessin technique","date_limite":"30/09/2026","actif":True},
+            ]
+            for o in offres_data:
+                if not Offre.query.get(o["id"]):
+                    db.session.add(Offre(**o))
+
+            # Candidats
+            candidats_data = [
+                {"nom":"YOUSSEF","prenom":"Alami","email":"youssef.alami@gmail.com","telephone":"0661234567","poste":"(01) Chef de projets Architecte","diplome":"MASTER","specialite":"Gestion des entreprises","ecole":"ENCG","promotion":2024,"experience":9,"score_ia":0.5382,"decision":"Présélectionné","cv_filename":"CV_ALAMI_Youssef_CGM.pdf","offre_id":1},
+                {"nom":"SARA","prenom":"Benali","email":"sara.benali@gmail.com","telephone":"0677890123","poste":"(01) Chef de projets Architecte","diplome":"MASTER","specialite":"Informatique","ecole":"USMBA","promotion":2024,"experience":8,"score_ia":0.6738,"decision":"Présélectionné","cv_filename":"CV_BENALI_Sara_SI.pdf","offre_id":1},
+                {"nom":"KARIM","prenom":"Idrissi","email":"karim.idrissi@gmail.com","telephone":"0654321987","poste":"(01) Chef de projets Architecte","diplome":"TECHNICIEN SPECIALISE","specialite":"Informatique","ecole":"ISTA","promotion":2024,"experience":8,"score_ia":0.3919,"decision":"Non retenu","cv_filename":"CV_IDRISSI_Karim_Archiviste.pdf","offre_id":1},
+                {"nom":"BENALI","prenom":"Leila","email":"benali.leila@gmail.com","telephone":"0672345678","poste":"CGM","diplome":"MASTER","specialite":"Gestion des entreprises","ecole":"Autre","promotion":2024,"experience":4,"score_ia":0.85,"decision":"Présélectionné","cv_filename":"CV_BENALI_Leila.pdf","offre_id":3},
+                {"nom":"RACHIDI","prenom":"Omar","email":"rachidi.omar@gmail.com","telephone":"0683456789","poste":"CGM","diplome":"MASTER","specialite":"Finance","ecole":"ENCG","promotion":2024,"experience":6,"score_ia":0.85,"decision":"Présélectionné","cv_filename":"CV_RACHIDI_Omar.pdf","offre_id":3},
+                {"nom":"TAZI","prenom":"Mehdi","email":"tazi.mehdi@gmail.com","telephone":"0661234567","poste":"CGM","diplome":"MASTER","specialite":"Finance","ecole":"ENCG","promotion":2024,"experience":5,"score_ia":0.85,"decision":"Présélectionné","cv_filename":"CV_TAZI_Mehdi.pdf","offre_id":3},
+                {"nom":"BERRADA","prenom":"Younes","email":"younes.berrada@gmail.com","telephone":"0661112233","poste":"Assistant Architecte","diplome":"MASTER","specialite":"Génie Civil et Architecture","ecole":"École Hassania des Travaux Publics","promotion":2020,"experience":6,"score_ia":0.3413,"decision":"Non retenu","cv_filename":"test_01_younes_berrada.pdf","offre_id":4},
+                {"nom":"OUAZZANI","prenom":"Karim","email":"karim.ouazzani@gmail.com","telephone":"0663334455","poste":"Assistant Architecte","diplome":"MASTER","specialite":"Architecture et Urbanisme","ecole":"École Supérieure d'Architecture de Fès","promotion":2022,"experience":2,"score_ia":0.3359,"decision":"Non retenu","cv_filename":"test_03_karim_ouazzani.pdf","offre_id":4},
+                {"nom":"AMRANI","prenom":"Hind","email":"hind.amrani@gmail.com","telephone":"0667778899","poste":"CGM","diplome":"LICENCE","specialite":"Architecture et Bâtiment","ecole":"ISTA","promotion":2020,"experience":4,"score_ia":0.4628,"decision":"À examiner","cv_filename":"test_07_hind_amrani.pdf","offre_id":3},
+            ]
+            for c in candidats_data:
+                db.session.add(Candidat(**c))
+
+            db.session.commit()
+            return "Base initialisée avec succès ! Données de démonstration importées.", 200
+
+        return f"Tables OK. {Candidat.query.count()} candidats déjà présents.", 200
+    except Exception as e:
+        import traceback
+        return f"Erreur : {e}<br><pre>{traceback.format_exc()}</pre>", 500
+
 if __name__ == "__main__":
     app.run(debug=True, port=5000, use_reloader=False)
