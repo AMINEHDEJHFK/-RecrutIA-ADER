@@ -206,6 +206,18 @@ class EvaluationJury(db.Model):
     date_evaluation   = db.Column(db.DateTime, default=datetime.utcnow)
 
 
+class QuestionsEntretien(db.Model):
+    """Questions IA partagées entre tous les jurys pour un candidat."""
+    __tablename__ = "questions_entretien"
+    id            = db.Column(db.Integer, primary_key=True)
+    candidat_id   = db.Column(db.Integer, db.ForeignKey('candidat.id'), unique=True, nullable=False)
+    candidat      = db.relationship('Candidat', backref=db.backref('questions_entretien', uselist=False))
+    questions_json = db.Column(db.Text, default="[]")   # liste des questions
+    posees_json    = db.Column(db.Text, default="[]")   # indices des questions posées
+    coche_par_json = db.Column(db.Text, default="{}")   # {idx: "nom jury"}
+    updated_at     = db.Column(db.DateTime, default=datetime.utcnow)
+
+
 class VerificationDossier(db.Model):
     """
     Vérification des pièces originales apportées le jour de l'entretien.
@@ -238,6 +250,7 @@ class UtilisateurRH(db.Model):
     email         = db.Column(db.String(150))
     password_hash = db.Column(db.String(256), nullable=False)
     role          = db.Column(db.String(20), default="rh")   # admin | rh | jury
+    jury_numero   = db.Column(db.Integer)                    # 1-4 pour les jurys
     actif         = db.Column(db.Boolean, default=True)
     date_creation = db.Column(db.DateTime, default=datetime.utcnow)
     reset_token       = db.Column(db.String(100))
@@ -702,10 +715,11 @@ def login():
             (UtilisateurRH.username == username) | (UtilisateurRH.email == username)
         ).filter_by(actif=True).first()
         if user and user.check_password(password):
-            session["rh_logged_in"] = True
-            session["user_id"]      = user.id
-            session["user_nom"]     = f"{user.prenom} {user.nom}"
-            session["role"]         = user.role
+            session["rh_logged_in"]  = True
+            session["user_id"]       = user.id
+            session["user_nom"]      = f"{user.prenom} {user.nom}"
+            session["role"]          = user.role
+            session["jury_numero"]   = user.jury_numero
             flash(f"Bienvenue, {user.prenom} {user.nom} !", "success")
             return redirect(url_for("dashboard"))
         flash("Identifiants incorrects ou compte désactivé.", "danger")
@@ -1423,6 +1437,11 @@ def verification_dossier(candidat_id):
 @app.route("/candidat/<int:candidat_id>/entretien-jury")
 @login_required
 def entretien_jury(candidat_id):
+    # Un membre jury va directement à son propre formulaire
+    if session.get("role") == "jury":
+        num = session.get("jury_numero")
+        if num:
+            return redirect(url_for("jury_form", candidat_id=candidat_id, num=num))
     candidat = Candidat.query.get_or_404(candidat_id)
     # Récupère les évaluations déjà soumises, indexées par numéro de jury
     evals = {e.numero_jury: e for e in candidat.evaluations_jury}
@@ -1444,6 +1463,10 @@ def entretien_jury(candidat_id):
 def jury_form(candidat_id, num):
     if num not in (1, 2, 3, 4):
         return redirect(url_for("entretien_jury", candidat_id=candidat_id))
+    # Un jury ne peut accéder qu'à son propre formulaire
+    if session.get("role") == "jury" and session.get("jury_numero") != num:
+        flash("Vous n'avez accès qu'à votre propre fiche d'évaluation.", "danger")
+        return redirect(url_for("jury_form", candidat_id=candidat_id, num=session.get("jury_numero")))
 
     candidat = Candidat.query.get_or_404(candidat_id)
     # Cherche une évaluation existante pour ce jury
@@ -1477,12 +1500,13 @@ def jury_form(candidat_id, num):
         eval_existante.date_evaluation    = datetime.utcnow()
         db.session.commit()
 
-        # Si les 4 jurys ont évalué → calcul et enregistrement du résultat final
+        # Calcul du score moyen sur le nombre de jurys ayant effectivement évalué
         evals = EvaluationJury.query.filter_by(candidat_id=candidat_id).all()
-        if len(evals) == 4:
-            score_moyen = round(sum(e.score_jury for e in evals) / 4, 2)
+        nb_jurys = len(evals)
+        if nb_jurys >= 1:
+            score_moyen = round(sum(e.score_jury for e in evals) / nb_jurys, 2)
 
-            # Décision : vérifier d'abord la conformité du dossier
+            # Décision basée sur le score moyen
             verif = candidat.verification
             if verif and not verif.conforme:
                 decision = "Éliminé"
@@ -1493,7 +1517,7 @@ def jury_form(candidat_id, num):
             else:
                 decision = "Éliminé"
 
-            # Mise à jour ou création de l'Entretien agrégé
+            # Mise à jour de l'Entretien agrégé
             entretien = candidat.entretien
             if not entretien:
                 entretien = Entretien(candidat_id=candidat_id)
@@ -1501,18 +1525,153 @@ def jury_form(candidat_id, num):
             entretien.score_entretien    = score_moyen
             entretien.decision_entretien = decision
             entretien.date_entretien     = datetime.utcnow()
+            entretien.evaluateur         = ", ".join(e.nom_jury for e in evals if e.nom_jury)
             db.session.commit()
 
-            flash(f"Les 4 jurys ont évalué — Score moyen : {score_moyen}/20 — Décision : {decision}", "success")
-        else:
-            flash(f"Évaluation jury #{num} enregistrée (score : {score}/20). {4 - len(evals)} jury(s) restant(s).", "info")
+            noms_jurys = ", ".join(e.nom_jury for e in evals if e.nom_jury) or f"{nb_jurys} jury(s)"
+            flash(f"Évaluation enregistrée — {nb_jurys} jury(s) : {noms_jurys} — Score moyen : {score_moyen}/20 — Décision : {decision}", "success")
 
         return redirect(url_for("entretien_jury", candidat_id=candidat_id))
+
+    import json as _json, re as _re
+    # Récupérer ou générer les questions partagées
+    q_obj = QuestionsEntretien.query.filter_by(candidat_id=candidat_id).first()
+    if not q_obj:
+        raw = generer_questions(candidat)
+        questions_list = []
+        if raw:
+            for line in raw.strip().splitlines():
+                line = line.strip()
+                # Ignorer entêtes markdown, séparateurs et lignes vides
+                if not line or line.startswith('#') or line.startswith('---'):
+                    continue
+                # Garder les lignes numérotées ou avec tiret
+                if line[0].isdigit() or line.startswith('-') or line.startswith('•'):
+                    clean = _re.sub(r'^[\d]+[\.\)\-]\s*|^[-•]\s*', '', line).strip()
+                    if clean and len(clean) > 10:
+                        questions_list.append(clean)
+        q_obj = QuestionsEntretien(
+            candidat_id=candidat_id,
+            questions_json=_json.dumps(questions_list, ensure_ascii=False),
+            posees_json="[]",
+            coche_par_json="{}"
+        )
+        db.session.add(q_obj)
+        db.session.commit()
+
+    questions_list = _json.loads(q_obj.questions_json or "[]")
+    # Régénérer si la liste est vide (première tentative ratée)
+    if not questions_list:
+        raw = generer_questions(candidat)
+        if raw:
+            for line in raw.strip().splitlines():
+                line = line.strip()
+                if not line or line.startswith('#') or line.startswith('---'):
+                    continue
+                if line[0].isdigit() or line.startswith('-') or line.startswith('•'):
+                    clean = _re.sub(r'^[\d]+[\.\)\-]\s*|^[-•]\s*', '', line).strip()
+                    if clean and len(clean) > 10:
+                        questions_list.append(clean)
+            q_obj.questions_json = _json.dumps(questions_list, ensure_ascii=False)
+            db.session.commit()
+    posees        = _json.loads(q_obj.posees_json or "[]")
+    coche_par     = _json.loads(q_obj.coche_par_json or "{}")
 
     return render_template("jury_form.html",
                            candidat=candidat,
                            num=num,
-                           eval_existante=eval_existante)
+                           eval_existante=eval_existante,
+                           questions_list=questions_list,
+                           posees=posees,
+                           coche_par=coche_par)
+
+
+# ── API QUESTIONS ENTRETIEN PARTAGÉES ────────────────────────────────────────
+
+@app.route("/api/questions/<int:candidat_id>/generer", methods=["POST"])
+@login_required
+def api_generer_questions(candidat_id):
+    import json as _json, re as _re
+    candidat = Candidat.query.get_or_404(candidat_id)
+    q_obj = QuestionsEntretien.query.filter_by(candidat_id=candidat_id).first()
+    # Ne pas régénérer si déjà des questions
+    if q_obj and _json.loads(q_obj.questions_json or '[]'):
+        return jsonify({"questions": _json.loads(q_obj.questions_json)})
+    raw = generer_questions(candidat)
+    if not raw:
+        return jsonify({"error": "Impossible de générer les questions. Vérifiez la clé API."}), 500
+    questions_list = []
+    for line in raw.strip().splitlines():
+        line = line.strip()
+        if not line or line.startswith('#') or line.startswith('---'): continue
+        if line[0].isdigit() or line.startswith('-') or line.startswith('•'):
+            clean = _re.sub(r'^[\d]+[\.\)\-]\s*|^[-•]\s*', '', line).strip()
+            if clean and len(clean) > 10:
+                questions_list.append(clean)
+    if not questions_list:
+        return jsonify({"error": "Aucune question générée."}), 500
+    if q_obj:
+        q_obj.questions_json = _json.dumps(questions_list, ensure_ascii=False)
+        q_obj.updated_at = datetime.utcnow()
+    else:
+        q_obj = QuestionsEntretien(
+            candidat_id=candidat_id,
+            questions_json=_json.dumps(questions_list, ensure_ascii=False),
+            posees_json='[]', coche_par_json='{}'
+        )
+        db.session.add(q_obj)
+    db.session.commit()
+    return jsonify({"questions": questions_list})
+
+
+@app.route("/api/questions/<int:candidat_id>/toggle", methods=["POST"])
+@login_required
+def api_toggle_question(candidat_id):
+    import json as _json
+    data = request.get_json()
+    idx  = data.get("idx")
+    if idx is None:
+        return jsonify({"error": "idx manquant"}), 400
+    # Relire depuis la base dans la même transaction pour éviter les conflits
+    db.session.expire_all()
+    q_obj = QuestionsEntretien.query.filter_by(candidat_id=candidat_id).with_for_update().first()
+    if not q_obj:
+        return jsonify({"error": "not found"}), 404
+    posees    = _json.loads(q_obj.posees_json or "[]")
+    coche_par = _json.loads(q_obj.coche_par_json or "{}")
+    # Utiliser le nom saisi dans la fiche si disponible, sinon le nom du compte
+    eval_jury = EvaluationJury.query.filter_by(
+        candidat_id=candidat_id, numero_jury=session.get("jury_numero", 0)
+    ).first()
+    nom_jury = (eval_jury.nom_jury if eval_jury and eval_jury.nom_jury
+                else session.get("user_nom", "Jury"))
+    key = str(idx)
+    if idx in posees:
+        posees.remove(idx)
+        coche_par.pop(key, None)
+    else:
+        posees.append(idx)
+        coche_par[key] = nom_jury
+    q_obj.posees_json    = _json.dumps(posees)
+    q_obj.coche_par_json = _json.dumps(coche_par, ensure_ascii=False)
+    q_obj.updated_at     = datetime.utcnow()
+    db.session.commit()
+    return jsonify({"posees": posees, "coche_par": coche_par})
+
+
+@app.route("/api/questions/<int:candidat_id>/etat")
+@login_required
+def api_questions_etat(candidat_id):
+    import json as _json
+    q_obj = QuestionsEntretien.query.filter_by(candidat_id=candidat_id).first()
+    if not q_obj:
+        return jsonify({"posees": [], "coche_par": {}, "ts": ""})
+    return jsonify({
+        "questions": _json.loads(q_obj.questions_json or "[]"),
+        "posees":    _json.loads(q_obj.posees_json or "[]"),
+        "coche_par": _json.loads(q_obj.coche_par_json or "{}"),
+        "ts":        q_obj.updated_at.isoformat() if q_obj.updated_at else ""
+    })
 
 
 # ── LISTE PRIVÉE NON-CONFORMES ────────────────────────────────────────────────
@@ -1658,9 +1817,35 @@ def explication_ia(candidat_id):
 @app.route("/candidat/<int:candidat_id>/questions-entretien")
 @login_required
 def questions_entretien(candidat_id):
-    candidat   = Candidat.query.get_or_404(candidat_id)
-    questions  = generer_questions(candidat)
+    import json as _json, re as _re
+    candidat    = Candidat.query.get_or_404(candidat_id)
+    questions   = generer_questions(candidat)
     has_api_key = bool(os.environ.get("ANTHROPIC_API_KEY"))
+
+    # Sauvegarder les questions générées dans QuestionsEntretien pour la fiche jury
+    if questions:
+        q_obj = QuestionsEntretien.query.filter_by(candidat_id=candidat_id).first()
+        existing_list = _json.loads(q_obj.questions_json or '[]') if q_obj else []
+        if not existing_list:
+            questions_list = []
+            for line in questions.strip().splitlines():
+                line = line.strip()
+                if not line or line.startswith('#') or line.startswith('---'): continue
+                if line[0].isdigit() or line.startswith('-') or line.startswith('•'):
+                    clean = _re.sub(r'^[\d]+[\.\)\-]\s*|^[-•]\s*', '', line).strip()
+                    if clean and len(clean) > 10:
+                        questions_list.append(clean)
+            if questions_list:
+                if q_obj:
+                    q_obj.questions_json = _json.dumps(questions_list, ensure_ascii=False)
+                else:
+                    db.session.add(QuestionsEntretien(
+                        candidat_id=candidat_id,
+                        questions_json=_json.dumps(questions_list, ensure_ascii=False),
+                        posees_json='[]', coche_par_json='{}'
+                    ))
+                db.session.commit()
+
     return render_template("questions_entretien.html",
                            candidat=candidat,
                            questions=questions,

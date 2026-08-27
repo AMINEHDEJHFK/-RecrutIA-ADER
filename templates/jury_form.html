@@ -3,302 +3,518 @@
 
 {% block extra_css %}
 <style>
-  .slider-row {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    margin-bottom: 18px;
+  /* Layout général */
+  .jury-page { background: #F0F4F8; min-height: 100vh; padding-bottom: 48px; }
+
+  /* En-tête page */
+  .jury-topbar {
+    background: linear-gradient(135deg, #0D5724 0%, #094A1D 100%);
+    padding: 20px 0;
+    color: #fff;
+    margin-bottom: 28px;
   }
-  .slider-label {
-    width: 140px;
-    font-weight: 600;
-    font-size: .85rem;
+  .jury-topbar .breadcrumb-item a { color: rgba(255,255,255,.65); font-size:.78rem; }
+  .jury-topbar .breadcrumb-item.active { color: rgba(255,255,255,.9); font-size:.78rem; }
+  .jury-topbar .breadcrumb-divider { color: rgba(255,255,255,.4); }
+  .jury-badge-num {
+    width: 48px; height: 48px; border-radius: 12px;
+    background: #E66210; color: #fff;
+    font-size: 1.5rem; font-weight: 900;
+    display: flex; align-items: center; justify-content: center;
     flex-shrink: 0;
   }
+  .jury-title { font-size: 1.25rem; font-weight: 800; }
+  .jury-sub   { font-size: .78rem; opacity: .7; }
+
+  /* Cards */
+  .jcard {
+    background: #fff; border-radius: 16px;
+    box-shadow: 0 2px 14px rgba(13,87,36,.08);
+    overflow: hidden;
+  }
+  .jcard-head {
+    padding: 14px 20px;
+    border-bottom: 1px solid #F1F5F9;
+    display: flex; align-items: center; gap: 10px;
+    font-size: .78rem; font-weight: 800;
+    text-transform: uppercase; letter-spacing: .08em;
+    color: #475569;
+  }
+  .jcard-head i { color: #0D5724; font-size: .85rem; }
+  .jcard-body  { padding: 20px; }
+
+  /* Sliders */
+  .slider-row {
+    display: flex; align-items: center; gap: 14px; margin-bottom: 18px;
+  }
+  .slider-label {
+    width: 130px; font-weight: 600; font-size: .82rem; flex-shrink: 0; color: #334155;
+  }
   .slider-label small {
-    display: block;
-    font-weight: 400;
-    font-size: .72rem;
-    color: var(--gris-moyen);
-    margin-top: 1px;
+    display: block; font-weight: 400; font-size: .7rem; color: #94A3B8; margin-top: 1px;
   }
   .slider-track { flex: 1; }
   input[type=range] {
-    width: 100%;
-    accent-color: var(--vert);
-    height: 6px;
-    cursor: pointer;
+    width: 100%; accent-color: #0D5724; height: 6px; cursor: pointer;
   }
   .slider-val {
-    width: 56px;
-    text-align: center;
-    font-size: 1.1rem;
-    font-weight: 800;
-    color: var(--vert);
-    flex-shrink: 0;
+    width: 52px; text-align: center;
+    font-size: 1.05rem; font-weight: 800; color: #0D5724; flex-shrink: 0;
   }
 
+  /* Score live */
   .score-live {
-    background: var(--vert);
-    color: #fff;
-    border-radius: 6px;
-    padding: 20px;
-    text-align: center;
-    position: sticky;
-    top: 20px;
+    background: linear-gradient(135deg, #0D5724, #094A1D);
+    color: #fff; border-radius: 16px;
+    padding: 24px 20px; text-align: center;
+    position: sticky; top: 20px;
   }
-  .score-live-num {
-    font-size: 3rem;
-    font-weight: 900;
-    line-height: 1;
+  .score-live-eyebrow { font-size: .65rem; opacity: .6; text-transform: uppercase; letter-spacing: .1em; margin-bottom: 8px; }
+  .score-live-num { font-size: 3.2rem; font-weight: 900; line-height: 1; }
+  .score-live-denom { font-size: .9rem; opacity: .6; }
+  .mention-pill {
+    display: inline-block; padding: 4px 14px;
+    border-radius: 99px; font-size: .72rem; font-weight: 700;
+    margin-top: 10px;
   }
-  .score-live-label { font-size: .8rem; opacity: .75; margin-top: 4px; }
 
-  .jury-header {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    padding: 16px 20px;
-    background: var(--vert-fonce);
-    color: #fff;
-    border-radius: 5px 5px 0 0;
+  /* Questions IA */
+  .q-list { list-style: none; padding: 0; margin: 0; }
+  .q-item {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 11px 0; border-bottom: 1px solid #F1F5F9;
+    transition: background .15s; cursor: pointer; border-radius: 8px;
+    padding-left: 8px; padding-right: 8px;
   }
-  .jury-num-badge {
-    width: 44px; height: 44px;
-    border-radius: 50%;
-    background: var(--orange);
+  .q-item:last-child { border-bottom: none; }
+  .q-item:hover { background: #F8FAFC; }
+  .q-item.asked { background: #ECFDF5; }
+  .q-item.asked .q-text { color: #065F46; text-decoration: line-through; opacity: .7; }
+  .q-check {
+    width: 22px; height: 22px; border-radius: 6px;
+    border: 2px solid #CBD5E1; flex-shrink: 0;
     display: flex; align-items: center; justify-content: center;
-    font-size: 1.3rem;
-    font-weight: 900;
-    flex-shrink: 0;
+    transition: all .15s; margin-top: 1px;
+  }
+  .q-item.asked .q-check {
+    background: #10B981; border-color: #10B981; color: #fff;
+  }
+  .q-num {
+    width: 22px; height: 22px; border-radius: 50%;
+    background: #F1F5F9; color: #64748B;
+    font-size: .68rem; font-weight: 800;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; margin-top: 1px;
+  }
+  .q-text { font-size: .82rem; color: #334155; line-height: 1.45; flex: 1; }
+  .q-asked-badge {
+    font-size: .65rem; font-weight: 700; color: #065F46;
+    background: #D1FAE5; padding: 2px 7px; border-radius: 99px;
+    white-space: nowrap; flex-shrink: 0; align-self: center;
   }
 
-  .mention-badge {
-    display: inline-block;
-    padding: 4px 12px;
-    border-radius: 3px;
-    font-size: .75rem;
-    font-weight: 700;
-    margin-top: 6px;
+  .q-counter {
+    background: #F0F4F8; border-radius: 8px; padding: 10px 16px;
+    font-size: .8rem; color: #475569; margin-bottom: 14px;
+    display: flex; align-items: center; justify-content: space-between;
   }
+  .q-counter strong { color: #0D5724; }
+
+  .no-questions {
+    text-align: center; padding: 32px 16px; color: #94A3B8;
+  }
+  .no-questions i { font-size: 2rem; margin-bottom: 10px; display: block; }
+  .no-questions p { font-size: .82rem; margin: 0; }
+
+  /* Candidat mini card */
+  .cand-row { display: flex; justify-content: space-between; font-size: .78rem; padding: 5px 0; border-bottom: 1px solid #F8FAFC; }
+  .cand-row:last-child { border-bottom: none; }
+  .cand-key { color: #94A3B8; font-weight: 600; }
+  .cand-val { color: #1E293B; font-weight: 700; }
 </style>
 {% endblock %}
 
 {% block content %}
-<div style="background:var(--fond);border-bottom:1px solid var(--gris-clair);padding:16px 0;margin-bottom:28px;">
-  <div class="container-xl px-4">
-    <nav class="mb-1">
-      <small>
-        <a href="{{ url_for('detail_candidat', candidat_id=candidat.id) }}" style="color:var(--vert);">{{ candidat.prenom }} {{ candidat.nom }}</a>
-        / <a href="{{ url_for('entretien_jury', candidat_id=candidat.id) }}" style="color:var(--vert);">Entretien jury</a>
-        / Jury {{ num }}
-      </small>
-    </nav>
-    <div class="section-label"><i class="fas fa-user-tie me-1"></i>Évaluation individuelle</div>
-    <h2 class="fw-bold mb-0" style="color:var(--vert);font-size:1.3rem;">
-      Fiche d'évaluation — Jury n°{{ num }}
-    </h2>
-  </div>
-</div>
+<div class="jury-page">
 
-<div class="container-xl px-4 pb-5">
-  <form method="POST">
-  <div class="row g-4">
-
-    <!-- Formulaire gauche -->
-    <div class="col-lg-8">
-      <div class="card">
-
-        <!-- En-tête jury -->
-        <div class="jury-header">
-          <div class="jury-num-badge">{{ num }}</div>
-          <div>
-            <div style="font-weight:700;font-size:1rem;">Membre du jury n°{{ num }}</div>
-            <div style="font-size:.78rem;opacity:.75;">
-              Candidat : <strong>{{ candidat.prenom }} {{ candidat.nom }}</strong>
-              &nbsp;·&nbsp; Poste : {{ candidat.poste }}
-            </div>
-          </div>
-          <div class="ms-auto text-end">
-            <div style="font-size:.7rem;opacity:.6;">Score IA</div>
-            <div style="font-size:1.2rem;font-weight:800;color:var(--orange);">{{ (candidat.score_ia*100)|round(1) }}%</div>
-          </div>
+  <!-- ── En-tête ─────────────────────────────────── -->
+  <div class="jury-topbar">
+    <div class="container-xl px-4">
+      <nav aria-label="breadcrumb" class="mb-2">
+        <ol class="breadcrumb mb-0" style="--bs-breadcrumb-divider:'/';">
+          <li class="breadcrumb-item"><a href="{{ url_for('detail_candidat', candidat_id=candidat.id) }}">{{ candidat.prenom }} {{ candidat.nom }}</a></li>
+          <li class="breadcrumb-item"><a href="{{ url_for('entretien_jury', candidat_id=candidat.id) }}">Entretien jury</a></li>
+          <li class="breadcrumb-item active">Jury {{ num }}</li>
+        </ol>
+      </nav>
+      <div class="d-flex align-items-center gap-3">
+        <div class="jury-badge-num">{{ num }}</div>
+        <div>
+          <div class="jury-title">Fiche d'évaluation — Jury n°{{ num }}</div>
+          <div class="jury-sub">{{ candidat.prenom }} {{ candidat.nom }} &nbsp;·&nbsp; {{ candidat.poste }}</div>
         </div>
+      </div>
+    </div>
+  </div>
 
-        <div class="card-body p-4">
+  <div class="container-xl px-4">
+    <form method="POST">
+    <div class="row g-4">
 
-          <!-- Identité du juré -->
-          <h6 class="fw-bold mb-3" style="color:var(--vert);">
-            <i class="fas fa-user-tie me-1"></i>Informations du membre du jury
-          </h6>
-          <div class="row g-3 mb-4">
-            <div class="col-md-6">
-              <label class="form-label fw-semibold" style="font-size:.82rem;" for="f_nom_jury">Nom et prénom <span class="text-danger">*</span></label>
-              <input id="f_nom_jury" type="text" name="nom_jury" class="form-control"
-                     value="{{ eval_existante.nom_jury if eval_existante else '' }}"
-                     placeholder="Ex: M. Hassan Alaoui" required>
-            </div>
-            <div class="col-md-6">
-              <label class="form-label fw-semibold" style="font-size:.82rem;" for="f_poste_jury">Fonction / Poste</label>
-              <input id="f_poste_jury" type="text" name="poste_jury" class="form-control"
-                     value="{{ eval_existante.poste_jury if eval_existante else '' }}"
-                     placeholder="Ex: Directeur RH">
-            </div>
-          </div>
+      <!-- ══ COLONNE GAUCHE : Fiche + Questions ══════════════════ -->
+      <div class="col-lg-8">
 
-          <hr class="my-3">
-
-          <!-- Critères de notation -->
-          <h6 class="fw-bold mb-4" style="color:var(--vert);">
-            <i class="fas fa-star me-1"></i>Grille de notation (chaque critère sur 20)
-          </h6>
-
-          {% set criteria = [
-            ('note_presentation',  'Présentation',  'Tenue, attitude, aisance'),
-            ('note_motivation',    'Motivation',    'Intérêt pour le poste, projet professionnel'),
-            ('note_competences',   'Compétences',   'Maîtrise technique, connaissances métier'),
-            ('note_communication', 'Communication', 'Expression orale, clarté, écoute'),
-            ('note_culture',       'Culture générale', 'Connaissance de l\'ADER, actualité'),
-          ] %}
-
-          {% for field, label, desc in criteria %}
-          {% set val = eval_existante[field]|int if eval_existante and eval_existante[field] is not none else 10 %}
-          <div class="slider-row">
-            <div class="slider-label">
-              {{ label }}
-              <small>{{ desc }}</small>
-            </div>
-            <div class="slider-track">
-              <input type="range" name="{{ field }}" min="0" max="20" step="0.5"
-                     value="{{ val }}"
-                     oninput="updateSlider(this, '{{ field }}_display'); recalc()">
-              <div style="display:flex;justify-content:space-between;font-size:.68rem;color:var(--gris-moyen);margin-top:2px;">
-                <span>0 — Insuffisant</span>
-                <span>10 — Moyen</span>
-                <span>20 — Excellent</span>
+        <!-- Identité jury + critères -->
+        <div class="jcard mb-4">
+          <div class="jcard-head"><i class="fas fa-user-tie"></i>Informations du membre du jury</div>
+          <div class="jcard-body">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label fw-semibold" style="font-size:.78rem;color:#64748B;">
+                  Nom et prénom <span class="text-danger">*</span>
+                  <small style="font-weight:400;color:#94A3B8;">(pré-rempli depuis votre compte)</small>
+                </label>
+                <input type="text" name="nom_jury" class="form-control"
+                       value="{{ eval_existante.nom_jury if eval_existante else session.get('user_nom','') }}"
+                       placeholder="Ex : M. Hassan Alaoui" required>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold" style="font-size:.78rem;color:#64748B;">Fonction / Poste</label>
+                <input type="text" name="poste_jury" class="form-control"
+                       value="{{ eval_existante.poste_jury if eval_existante else '' }}"
+                       placeholder="Ex : Directeur RH">
               </div>
             </div>
-            <div class="slider-val" id="{{ field }}_display">{{ val }}</div>
           </div>
-          {% endfor %}
-
-          <hr class="my-3">
-
-          <!-- Commentaire -->
-          <div class="mb-3">
-            <label class="form-label fw-semibold" style="font-size:.82rem;" for="f_commentaire">Observations du jury (optionnel)</label>
-            <textarea id="f_commentaire" name="commentaire" class="form-control" rows="3"
-                      placeholder="Points forts, points faibles, remarques...">{{ eval_existante.commentaire if eval_existante else '' }}</textarea>
-          </div>
-
-          <div class="d-flex gap-2">
-            <button type="submit" class="btn-ader"
-                    style="border-radius:3px;padding:10px 24px;font-weight:700;display:inline-flex;align-items:center;gap:8px;">
-              <i class="fas fa-save"></i>Enregistrer l'évaluation
-            </button>
-            <a href="{{ url_for('entretien_jury', candidat_id=candidat.id) }}"
-               class="btn btn-outline-secondary">Annuler</a>
-            <button type="button" onclick="window.print()"
-                    class="btn btn-outline-secondary ms-auto">
-              <i class="fas fa-print me-1"></i>Imprimer
-            </button>
-          </div>
-
         </div>
-      </div>
-    </div>
 
-    <!-- Score live droite -->
-    <div class="col-lg-4">
+        <div class="jcard mb-4">
+          <div class="jcard-head"><i class="fas fa-star"></i>Grille de notation (chaque critère sur 20)</div>
+          <div class="jcard-body">
+            {% set criteria = [
+              ('note_presentation',  'Présentation',  'Tenue, attitude, aisance'),
+              ('note_motivation',    'Motivation',    'Intérêt pour le poste, projet professionnel'),
+              ('note_competences',   'Compétences',   'Maîtrise technique, connaissances métier'),
+              ('note_communication', 'Communication', 'Expression orale, clarté, écoute'),
+              ('note_culture',       'Culture générale', 'Connaissance de l\'ADER, actualité'),
+            ] %}
+            {% for field, label, desc in criteria %}
+            {% set val = eval_existante[field]|int if eval_existante and eval_existante[field] is not none else 10 %}
+            <div class="slider-row">
+              <div class="slider-label">
+                {{ label }}
+                <small>{{ desc }}</small>
+              </div>
+              <div class="slider-track">
+                <input type="range" name="{{ field }}" min="0" max="20" step="0.5"
+                       value="{{ val }}"
+                       oninput="updateSlider(this, '{{ field }}_display'); recalc()">
+                <div style="display:flex;justify-content:space-between;font-size:.65rem;color:#CBD5E1;margin-top:2px;">
+                  <span>0 — Insuffisant</span><span>10 — Moyen</span><span>20 — Excellent</span>
+                </div>
+              </div>
+              <div class="slider-val" id="{{ field }}_display">{{ val }}</div>
+            </div>
+            {% endfor %}
 
-      <!-- Fiche candidat résumé -->
-      <div class="card mb-3">
-        <div class="card-header-ader">
-          <h6 class="mb-0"><i class="fas fa-user me-1"></i>Candidat</h6>
+            <hr class="my-3" style="border-color:#F1F5F9;">
+
+            <div>
+              <label class="form-label fw-semibold" style="font-size:.78rem;color:#64748B;">Observations (optionnel)</label>
+              <textarea name="commentaire" class="form-control" rows="3"
+                        placeholder="Points forts, points faibles, remarques...">{{ eval_existante.commentaire if eval_existante else '' }}</textarea>
+            </div>
+
+            <div class="d-flex gap-2 mt-4">
+              <button type="submit" class="btn-ader"
+                      style="border-radius:8px;padding:10px 24px;font-weight:700;display:inline-flex;align-items:center;gap:8px;">
+                <i class="fas fa-save"></i>Enregistrer l'évaluation
+              </button>
+              <a href="{{ url_for('entretien_jury', candidat_id=candidat.id) }}"
+                 class="btn btn-outline-secondary">Annuler</a>
+              <button type="button" onclick="window.print()"
+                      class="btn btn-outline-secondary ms-auto">
+                <i class="fas fa-print me-1"></i>Imprimer
+              </button>
+            </div>
+          </div>
         </div>
-        <div class="card-body p-3">
-          <div class="fw-bold">{{ candidat.prenom }} {{ candidat.nom }}</div>
-          <div class="text-muted small">{{ candidat.email }}</div>
-          <hr class="my-2">
-          <table class="table table-sm mb-0">
-            <tr><td class="text-muted" style="font-size:.78rem;">Diplôme</td><td class="small fw-semibold">{{ candidat.diplome }}</td></tr>
-            <tr><td class="text-muted" style="font-size:.78rem;">Spécialité</td><td class="small fw-semibold">{{ candidat.specialite }}</td></tr>
-            <tr><td class="text-muted" style="font-size:.78rem;">Expérience</td><td class="small fw-semibold">{{ candidat.experience }} an(s)</td></tr>
-            <tr><td class="text-muted" style="font-size:.78rem;">Score IA</td>
-                <td class="small fw-semibold" style="color:var(--vert);">{{ (candidat.score_ia*100)|round(1) }}%</td></tr>
-          </table>
-          {% if candidat.verification %}
-          <div class="mt-2">
-            {% if candidat.verification.conforme %}
-              <span style="background:#E8F5EE;color:#0D5724;border-radius:3px;padding:3px 8px;font-size:.72rem;font-weight:700;">
-                <i class="fas fa-check me-1"></i>Dossier conforme
-              </span>
-            {% else %}
-              <span style="background:#FEECEC;color:#B91C1C;border-radius:3px;padding:3px 8px;font-size:.72rem;font-weight:700;">
-                <i class="fas fa-exclamation me-1"></i>Dossier non conforme
-              </span>
+
+        <!-- ══ Questions IA ══════════════════════════════════════ -->
+        <div class="jcard">
+          <div class="jcard-head">
+            <i class="fas fa-robot"></i>
+            Questions d'entretien générées par l'IA
+            <span class="ms-auto" style="font-size:.65rem;font-weight:600;color:#CBD5E1;text-transform:none;letter-spacing:0;">
+              Cochez les questions posées au candidat
+            </span>
+          </div>
+          <div class="jcard-body">
+
+            <!-- Bouton génération -->
+            <div id="zone-generer" style="{% if questions_list %}display:none;{% endif %}text-align:center;padding:32px 16px;">
+              <i class="fas fa-robot" style="font-size:2.5rem;color:#CBD5E1;display:block;margin-bottom:14px;"></i>
+              <p style="color:#64748B;font-size:.85rem;margin-bottom:20px;">
+                Cliquez pour générer les questions d'entretien personnalisées par l'IA.<br>
+                <small style="color:#94A3B8;">Tous les jurys verront les mêmes questions.</small>
+              </p>
+              <button type="button" id="btn-generer" onclick="genererQuestions()"
+                      style="background:#0D5724;color:#fff;border:none;border-radius:10px;
+                             padding:12px 28px;font-size:.88rem;font-weight:700;cursor:pointer;
+                             display:inline-flex;align-items:center;gap:9px;">
+                <i class="fas fa-magic"></i> Générer les questions IA
+              </button>
+              <div id="loading-msg" style="display:none;margin-top:16px;color:#0D5724;font-size:.82rem;font-weight:600;">
+                <i class="fas fa-spinner fa-spin me-2"></i>Génération en cours, veuillez patienter...
+              </div>
+            </div>
+
+            <!-- Liste des questions (cachée si vide) -->
+            <div id="zone-questions" style="{% if not questions_list %}display:none;{% endif %}">
+              <div class="q-counter">
+                <span><strong id="q-asked-count">{{ posees|length }}</strong> / <span id="q-total">{{ questions_list|length }}</span> questions posées</span>
+                <span id="sync-indicator" style="font-size:.65rem;color:#94A3B8;">
+                  <i class="fas fa-circle" style="font-size:.45rem;color:#10B981;"></i> Synchronisé
+                </span>
+              </div>
+              <ul class="q-list" id="qList">
+                {% for q in questions_list %}
+                {% set idx = loop.index0 %}
+                {% set is_posed = idx in posees %}
+                {% set qui = coche_par.get(idx|string, '') %}
+                <li class="q-item {% if is_posed %}asked{% endif %}"
+                    data-idx="{{ idx }}" onclick="toggleQ(this)">
+                  <div class="q-check">
+                    <i class="fas fa-check" style="font-size:.65rem;{% if not is_posed %}display:none;{% endif %}"></i>
+                  </div>
+                  <div class="q-num">{{ loop.index }}</div>
+                  <div class="q-text">{{ q }}</div>
+                  <div class="q-asked-badge" style="{% if not is_posed %}display:none;{% endif %}">
+                    {% if qui %}{{ qui }} ✓{% else %}Posée ✓{% endif %}
+                  </div>
+                </li>
+                {% endfor %}
+              </ul>
+            </div>
+
+          </div>
+        </div>
+
+      </div><!-- /col-lg-8 -->
+
+      <!-- ══ COLONNE DROITE : Candidat + Score live ══════════════ -->
+      <div class="col-lg-4">
+
+        <!-- Fiche candidat -->
+        <div class="jcard mb-3">
+          <div class="jcard-head"><i class="fas fa-user"></i>Candidat</div>
+          <div class="jcard-body">
+            <div style="font-size:1rem;font-weight:800;color:#1E293B;">{{ candidat.prenom }} {{ candidat.nom }}</div>
+            {% if candidat.email %}<div style="font-size:.75rem;color:#94A3B8;margin-bottom:12px;">{{ candidat.email }}</div>{% endif %}
+            <div class="cand-row"><span class="cand-key">Diplôme</span><span class="cand-val">{{ candidat.diplome }}</span></div>
+            <div class="cand-row"><span class="cand-key">Spécialité</span><span class="cand-val">{{ candidat.specialite }}</span></div>
+            <div class="cand-row"><span class="cand-key">Expérience</span><span class="cand-val">{{ candidat.experience }} an(s)</span></div>
+            <div class="cand-row">
+              <span class="cand-key">Score IA</span>
+              <span class="cand-val" style="color:#0D5724;">{{ (candidat.score_ia*100)|round(1) }}%</span>
+            </div>
+            {% if candidat.verification %}
+            <div class="mt-2">
+              {% if candidat.verification.conforme %}
+                <span style="background:#ECFDF5;color:#065F46;border-radius:99px;padding:4px 12px;font-size:.7rem;font-weight:700;">
+                  <i class="fas fa-check me-1"></i>Dossier conforme
+                </span>
+              {% else %}
+                <span style="background:#FEF2F2;color:#991B1B;border-radius:99px;padding:4px 12px;font-size:.7rem;font-weight:700;">
+                  <i class="fas fa-times me-1"></i>Dossier non conforme
+                </span>
+              {% endif %}
+            </div>
             {% endif %}
           </div>
-          {% endif %}
         </div>
-      </div>
 
-      <!-- Score en direct -->
-      <div class="score-live">
-        <div style="font-size:.72rem;opacity:.7;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;">
-          Score jury {{ num }} — Temps réel
+        <!-- Score en direct -->
+        <div class="score-live">
+          <div class="score-live-eyebrow">Score jury {{ num }} — Temps réel</div>
+          <div class="score-live-num" id="live-score">10.0</div>
+          <div class="score-live-denom">/20</div>
+          <div class="mention-pill" id="live-mention" style="background:rgba(255,255,255,.15);color:#fff;">Moyen</div>
+          <hr style="border-color:rgba(255,255,255,.15);margin:16px 0;">
+          <div style="font-size:.72rem;opacity:.75;text-align:left;line-height:1.7;">
+            <i class="fas fa-info-circle me-1"></i>
+            &lt; 10 → Éliminé automatiquement<br>
+            10–12 → Jury décide<br>
+            ≥ 12 → Retenu
+          </div>
         </div>
-        <div class="score-live-num" id="live-score">10.0</div>
-        <div class="score-live-label">/20</div>
-        <div id="live-mention" class="mention-badge" style="background:rgba(255,255,255,.2);color:#fff;">Moyen</div>
-        <hr style="border-color:rgba(255,255,255,.2);margin:14px 0;">
-        <div style="font-size:.75rem;opacity:.8;">
-          <i class="fas fa-info-circle me-1"></i>
-          &lt; 10 → Éliminé automatiquement<br>
-          10–12 → Jury décide<br>
-          ≥ 12 → Retenu
-        </div>
-      </div>
 
+      </div>
     </div>
+    </form>
   </div>
-  </form>
 </div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-  function updateSlider(el, displayId) {
-    const v = parseFloat(el.value);
-    document.getElementById(displayId).textContent = v % 1 === 0 ? v.toFixed(0) : v.toFixed(1);
+// ── Sliders ──────────────────────────────────
+function updateSlider(el, displayId) {
+  const v = parseFloat(el.value);
+  document.getElementById(displayId).textContent = v % 1 === 0 ? v.toFixed(0) : v.toFixed(1);
+}
+function recalc() {
+  const fields = ['note_presentation','note_motivation','note_competences','note_communication','note_culture'];
+  const sum = fields.reduce((acc, f) => acc + parseFloat(document.querySelector(`input[name="${f}"]`).value), 0);
+  const avg = sum / fields.length;
+  document.getElementById('live-score').textContent = avg % 1 === 0 ? avg.toFixed(0) : avg.toFixed(1);
+  const badge = document.getElementById('live-mention');
+  let mention, bg;
+  if (avg < 10)      { mention = 'Éliminé';     bg = '#DC2626'; }
+  else if (avg < 12) { mention = 'À délibérer'; bg = '#B45309'; }
+  else if (avg < 16) { mention = 'Retenu';       bg = 'rgba(255,255,255,.15)'; }
+  else               { mention = 'Excellent';    bg = '#E66210'; }
+  badge.textContent = mention;
+  badge.style.background = bg;
+}
+document.querySelectorAll('input[type=range]').forEach(el => {
+  updateSlider(el, el.name + '_display');
+});
+recalc();
+
+// ── Questions IA — partagées en temps réel ───
+const CANDIDAT_ID = {{ candidat.id }};
+let lastTs = '';
+let polling = null;
+
+async function genererQuestions() {
+  const btn = document.getElementById('btn-generer');
+  const loading = document.getElementById('loading-msg');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Génération...';
+  loading.style.display = 'block';
+  try {
+    const res = await fetch(`/api/questions/${CANDIDAT_ID}/generer`, { method: 'POST' });
+    const data = await res.json();
+    if (data.error) {
+      alert('Erreur : ' + data.error);
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-magic"></i> Générer les questions IA';
+      loading.style.display = 'none';
+    } else {
+      renderQuestions(data.questions, [], {});
+    }
+  } catch(e) {
+    alert('Erreur de connexion.');
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-magic"></i> Générer les questions IA';
+    loading.style.display = 'none';
   }
+}
 
-  function recalc() {
-    const fields = ['note_presentation','note_motivation','note_competences','note_communication','note_culture'];
-    const sum = fields.reduce((acc, f) => {
-      const el = document.querySelector(`input[name="${f}"]`);
-      return acc + (el ? parseFloat(el.value) : 0);
-    }, 0);
-    const avg = sum / fields.length;
-    const display = avg % 1 === 0 ? avg.toFixed(0) : avg.toFixed(1);
-    document.getElementById('live-score').textContent = display;
-
-    let mention, bg;
-    if (avg < 10) { mention = 'Éliminé'; bg = '#DC2626'; }
-    else if (avg < 12) { mention = 'À délibérer'; bg = '#B45309'; }
-    else if (avg < 16) { mention = 'Retenu'; bg = 'rgba(255,255,255,.2)'; }
-    else { mention = 'Excellent'; bg = '#E66210'; }
-
-    const badge = document.getElementById('live-mention');
-    badge.textContent = mention;
-    badge.style.background = bg;
-  }
-
-  // Init
-  document.querySelectorAll('input[type=range]').forEach(el => {
-    const id = el.name + '_display';
-    updateSlider(el, id);
+function renderQuestions(questions, posees, cochePar) {
+  const list = document.getElementById('qList');
+  list.innerHTML = '';
+  questions.forEach((q, idx) => {
+    const isPosed = posees.includes(idx);
+    const qui = cochePar[String(idx)] || '';
+    const li = document.createElement('li');
+    li.className = 'q-item' + (isPosed ? ' asked' : '');
+    li.dataset.idx = idx;
+    li.onclick = function() { toggleQ(this); };
+    li.innerHTML = `
+      <div class="q-check"><i class="fas fa-check" style="font-size:.65rem;${isPosed ? '' : 'display:none;'}"></i></div>
+      <div class="q-num">${idx + 1}</div>
+      <div class="q-text">${q}</div>
+      <div class="q-asked-badge" style="${isPosed ? '' : 'display:none;'}">${qui ? qui + ' ✓' : 'Posée ✓'}</div>`;
+    list.appendChild(li);
   });
-  recalc();
+  document.getElementById('q-total').textContent = questions.length;
+  document.getElementById('zone-generer').style.display = 'none';
+  document.getElementById('zone-questions').style.display = '';
+  updateCounter();
+}
+
+function applyState(posees, cochePar) {
+  document.querySelectorAll('.q-item').forEach(item => {
+    const idx = parseInt(item.dataset.idx);
+    const qui = cochePar[String(idx)] || '';
+    markItem(item, posees.includes(idx), qui);
+  });
+  updateCounter();
+}
+
+function setSyncStatus(ok) {
+  const el = document.getElementById('sync-indicator');
+  if (!el) return;
+  el.innerHTML = ok
+    ? '<i class="fas fa-circle" style="font-size:.45rem;color:#10B981;"></i> Synchronisé'
+    : '<i class="fas fa-circle" style="font-size:.45rem;color:#E66210;"></i> Hors ligne';
+}
+
+async function toggleQ(item) {
+  const idx = parseInt(item.dataset.idx);
+  // Mise à jour visuelle immédiate (optimiste)
+  const wasPosed = item.classList.contains('asked');
+  wasPosed ? markItem(item, false, '') : markItem(item, true, '{{ session.get("user_nom","Jury") }}');
+  updateCounter();
+  try {
+    const res = await fetch(`/api/questions/${CANDIDAT_ID}/toggle`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({idx})
+    });
+    const data = await res.json();
+    lastTs = ''; // forcer refresh au prochain poll
+    applyState(data.posees, data.coche_par);
+    setSyncStatus(true);
+  } catch(e) {
+    // Annuler la mise à jour optimiste en cas d'erreur
+    wasPosed ? markItem(item, true, '') : markItem(item, false, '');
+    setSyncStatus(false);
+  }
+}
+
+function markItem(item, posed, qui) {
+  const check = item.querySelector('.q-check i');
+  const badge = item.querySelector('.q-asked-badge');
+  if (posed) {
+    item.classList.add('asked');
+    if (check) check.style.display = '';
+    if (badge) { badge.textContent = (qui || 'Posée') + ' ✓'; badge.style.display = ''; }
+  } else {
+    item.classList.remove('asked');
+    if (check) check.style.display = 'none';
+    if (badge) badge.style.display = 'none';
+  }
+}
+
+async function pollState() {
+  try {
+    const res = await fetch(`/api/questions/${CANDIDAT_ID}/etat`);
+    const data = await res.json();
+    if (data.ts !== lastTs) {
+      lastTs = data.ts;
+      // Si des questions viennent d'être générées par un autre jury
+      if (data.questions && data.questions.length > 0) {
+        const zoneQ = document.getElementById('zone-questions');
+        if (zoneQ.style.display === 'none') {
+          renderQuestions(data.questions, data.posees, data.coche_par);
+        } else {
+          applyState(data.posees, data.coche_par);
+        }
+      } else {
+        applyState(data.posees, data.coche_par);
+      }
+    }
+    setSyncStatus(true);
+  } catch(e) {
+    setSyncStatus(false);
+  }
+}
+
+// Poll toutes les 3 secondes
+pollState();
+polling = setInterval(pollState, 3000);
 </script>
 {% endblock %}

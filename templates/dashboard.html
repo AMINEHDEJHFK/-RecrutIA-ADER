@@ -2,237 +2,391 @@
 {% block title %}Dashboard RH - RecrutIA{% endblock %}
 
 {% block content %}
-<div style="background:var(--fond);border-bottom:1px solid var(--gris-clair);padding:18px 0;margin-bottom:28px;">
+<style>
+  /* ══ Layout ══════════════════════════════════════════════ */
+  .dash-wrap { background: #F0F4F8; min-height: 100vh; padding: 0 0 40px; }
+
+  /* ══ Page header ════════════════════════════════════════ */
+  .dash-header {
+    background: linear-gradient(135deg, #0D5724 0%, #094A1D 100%);
+    padding: 28px 0 56px;
+    position: relative;
+    overflow: hidden;
+  }
+  .dash-header::after {
+    content: '';
+    position: absolute;
+    bottom: -1px; left: 0; right: 0; height: 36px;
+    background: #F0F4F8;
+    clip-path: ellipse(55% 100% at 50% 100%);
+  }
+  .dash-header-eyebrow {
+    font-size: .7rem; font-weight: 700; letter-spacing: .12em;
+    text-transform: uppercase; color: rgba(255,255,255,.55);
+    margin-bottom: 4px;
+  }
+  .dash-header h1 {
+    font-size: 1.55rem; font-weight: 800; color: #fff;
+    margin: 0 0 4px;
+  }
+  .dash-header-sub { font-size: .82rem; color: rgba(255,255,255,.65); }
+  .dash-header-actions { display: flex; gap: 10px; align-items: center; }
+  .btn-export {
+    background: rgba(255,255,255,.12); color: #fff;
+    border: 1.5px solid rgba(255,255,255,.25);
+    border-radius: 8px; padding: 9px 18px;
+    font-size: .8rem; font-weight: 700;
+    display: inline-flex; align-items: center; gap: 7px;
+    text-decoration: none; transition: background .18s;
+  }
+  .btn-export:hover { background: rgba(255,255,255,.22); color: #fff; }
+
+  /* ══ KPI cards ══════════════════════════════════════════ */
+  .kpi-row { margin-top: -28px; }
+  .kpi-card {
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(13,87,36,.10);
+    padding: 20px 22px;
+    display: flex; align-items: center; gap: 16px;
+    height: 100%;
+    transition: transform .18s, box-shadow .18s;
+    border-top: 4px solid transparent;
+  }
+  .kpi-card:hover { transform: translateY(-3px); box-shadow: 0 10px 32px rgba(13,87,36,.14); }
+  .kpi-card.green  { border-color: #0D5724; }
+  .kpi-card.emerald{ border-color: #10B981; }
+  .kpi-card.orange { border-color: #E66210; }
+  .kpi-card.red    { border-color: #EF4444; }
+  .kpi-card.blue   { border-color: #6366F1; }
+
+  .kpi-icon {
+    width: 48px; height: 48px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.15rem; flex-shrink: 0;
+  }
+  .kpi-icon.green  { background: #E8F2EB; color: #0D5724; }
+  .kpi-icon.emerald{ background: #ECFDF5; color: #10B981; }
+  .kpi-icon.orange { background: #FEF0E6; color: #E66210; }
+  .kpi-icon.red    { background: #FEF2F2; color: #EF4444; }
+  .kpi-icon.blue   { background: #EEF2FF; color: #6366F1; }
+
+  .kpi-val { font-size: 1.9rem; font-weight: 800; line-height: 1; }
+  .kpi-val.green   { color: #0D5724; }
+  .kpi-val.emerald { color: #10B981; }
+  .kpi-val.orange  { color: #E66210; }
+  .kpi-val.red     { color: #EF4444; }
+  .kpi-val.blue    { color: #6366F1; }
+  .kpi-label { font-size: .72rem; font-weight: 600; color: #94A3B8;
+               text-transform: uppercase; letter-spacing: .08em; margin-top: 3px; }
+
+  /* ══ Chart section ══════════════════════════════════════ */
+  .section-title {
+    font-size: .68rem; font-weight: 800; letter-spacing: .11em;
+    text-transform: uppercase; color: #94A3B8; margin-bottom: 14px;
+  }
+  .chart-card {
+    background: #fff; border-radius: 16px;
+    box-shadow: 0 2px 16px rgba(13,87,36,.07);
+    padding: 22px; height: 100%;
+    transition: transform .18s, box-shadow .18s;
+  }
+  .chart-card:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(13,87,36,.12); }
+  .chart-card-title {
+    font-size: .78rem; font-weight: 800; color: #1E293B;
+    margin-bottom: 2px; display: flex; align-items: center; gap: 7px;
+  }
+  .chart-card-sub { font-size: .7rem; color: #94A3B8; margin-bottom: 16px; }
+  .chart-dot {
+    width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+  }
+
+  /* Score bars */
+  .sbar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 9px; font-size: .8rem; }
+  .sbar-name { width: 88px; color: #475569; font-weight: 600; font-size: .75rem;
+               white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sbar-track { flex: 1; height: 8px; border-radius: 99px; background: #F1F5F9; overflow: hidden; }
+  .sbar-fill  { height: 100%; border-radius: 99px; transition: width 1.2s cubic-bezier(.4,0,.2,1); }
+  .sbar-count { width: 22px; text-align: right; font-weight: 700; color: #1E293B; font-size: .78rem; }
+
+  /* ══ Filtres & tableau ══════════════════════════════════ */
+  .filter-bar {
+    background: #fff; border-radius: 14px;
+    box-shadow: 0 2px 12px rgba(13,87,36,.06);
+    padding: 16px 20px; margin-bottom: 16px;
+  }
+  .filter-bar .form-control,
+  .filter-bar .form-select {
+    border: 1.5px solid #E2E8F0; border-radius: 9px;
+    font-size: .82rem; padding: 8px 12px;
+    transition: border-color .18s;
+  }
+  .filter-bar .form-control:focus,
+  .filter-bar .form-select:focus { border-color: #0D5724; box-shadow: 0 0 0 3px rgba(13,87,36,.10); }
+
+  .table-card {
+    background: #fff; border-radius: 16px;
+    box-shadow: 0 2px 16px rgba(13,87,36,.07);
+    overflow: hidden;
+  }
+  .table-card .table { margin: 0; font-size: .82rem; }
+  .table-card thead th {
+    background: #F8FAFC; color: #64748B; font-size: .68rem;
+    font-weight: 800; text-transform: uppercase; letter-spacing: .09em;
+    border-bottom: 2px solid #EEF2F7; padding: 13px 14px;
+    white-space: nowrap;
+  }
+  .table-card tbody td {
+    padding: 13px 14px; vertical-align: middle;
+    border-bottom: 1px solid #F1F5F9; color: #334155;
+  }
+  .table-card tbody tr:last-child td { border-bottom: none; }
+  .table-card tbody tr:hover td { background: #F8FAFC; }
+
+  .score-pill {
+    display: inline-flex; align-items: center;
+    gap: 5px; padding: 4px 10px;
+    border-radius: 99px; font-size: .75rem; font-weight: 700;
+  }
+  .score-pill.high { background: #ECFDF5; color: #065F46; }
+  .score-pill.mid  { background: #FFF7ED; color: #9A3412; }
+  .score-pill.low  { background: #FEF2F2; color: #991B1B; }
+
+  .badge-poste {
+    font-size: .68rem; font-weight: 700; padding: 4px 9px;
+    border-radius: 6px; letter-spacing: .04em;
+  }
+  .badge-decision {
+    font-size: .7rem; font-weight: 700; padding: 5px 10px;
+    border-radius: 99px; display: inline-flex; align-items: center; gap: 5px;
+  }
+  .badge-decision.presel { background: #ECFDF5; color: #065F46; }
+  .badge-decision.exam   { background: #FFF7ED; color: #9A3412; }
+  .badge-decision.non    { background: #FEF2F2; color: #991B1B; }
+
+  .btn-voir {
+    background: #F0F4F8; color: #0D5724;
+    border: none; border-radius: 8px; padding: 6px 13px;
+    font-size: .75rem; font-weight: 700;
+    display: inline-flex; align-items: center; gap: 6px;
+    transition: background .15s; text-decoration: none;
+  }
+  .btn-voir:hover { background: #0D5724; color: #fff; }
+
+  .empty-state { padding: 60px 20px; text-align: center; color: #94A3B8; }
+  .empty-state i { font-size: 2.8rem; margin-bottom: 14px; display: block; }
+  .empty-state p { font-size: .9rem; margin: 0 0 18px; }
+
+  /* Donut center */
+  #donutCenter {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%,-50%);
+    text-align: center; pointer-events: none;
+  }
+  #donutPct { font-size: 2rem; font-weight: 800; color: #0D5724; line-height: 1; }
+  #donutSub { font-size: .6rem; color: #94A3B8; font-weight: 700;
+              letter-spacing: .08em; text-transform: uppercase; }
+
+  /* Animated entry */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .au { animation: fadeUp .45s ease both; }
+  .au-1 { animation-delay: .05s; }
+  .au-2 { animation-delay: .1s; }
+  .au-3 { animation-delay: .15s; }
+  .au-4 { animation-delay: .2s; }
+  .au-5 { animation-delay: .25s; }
+</style>
+
+<div class="dash-wrap">
+
+  <!-- ── En-tête ─────────────────────────────────────── -->
+  <div class="dash-header">
+    <div class="container-xl px-4">
+      <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+        <div>
+          <div class="dash-header-eyebrow"><i class="fas fa-chart-bar me-1"></i>Tableau de bord</div>
+          <h1>Dashboard RH</h1>
+          <div class="dash-header-sub">Suivi des candidatures — ADER Fès &nbsp;·&nbsp; {{ stats.total }} candidature{{ 's' if stats.total != 1 }}</div>
+        </div>
+        <div class="dash-header-actions">
+          <a href="{{ url_for('export_excel') }}" class="btn-export">
+            <i class="fas fa-file-excel"></i> Exporter Excel
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div class="container-xl px-4">
-    <div class="d-flex justify-content-between align-items-center">
-      <div>
-        <div class="section-label"><i class="fas fa-chart-bar me-1"></i>Suivi</div>
-        <h2 class="fw-bold mb-0" style="color:var(--vert);font-size:1.4rem;">Dashboard RH</h2>
-        <small class="text-muted">Suivi des candidatures — ADER Fès</small>
-      </div>
-      <a href="{{ url_for('export_excel') }}" class="btn-or" style="border-radius:3px;padding:10px 22px;font-weight:700;font-size:.85rem;text-decoration:none;display:inline-flex;align-items:center;gap:8px;">
-        <i class="fas fa-file-excel"></i>Exporter Excel
-      </a>
-    </div>
-  </div>
-</div>
 
-<div class="container-xl px-4">
-
-  <!-- STATS -->
-  <div class="row g-3 mb-4 row-cols-2 row-cols-md-5">
-    <div class="col">
-      <div class="stat-card text-center">
-        <div class="stat-number">{{ stats.total }}</div>
-        <div class="stat-label">Total candidatures</div>
-      </div>
-    </div>
-    <div class="col">
-      <div class="stat-card text-center">
-        <div class="stat-number">{{ stats.preselectionnes }}</div>
-        <div class="stat-label">Présélectionnés</div>
-      </div>
-    </div>
-    <div class="col">
-      <div class="stat-card orange text-center">
-        <div class="stat-number orange">{{ stats.a_examiner }}</div>
-        <div class="stat-label">À examiner</div>
-      </div>
-    </div>
-    <div class="col">
-      <div class="stat-card rouge text-center">
-        <div class="stat-number rouge">{{ stats.non_retenus }}</div>
-        <div class="stat-label">Non retenus</div>
-      </div>
-    </div>
-    <div class="col">
-      <div class="stat-card orange text-center">
-        <div class="stat-number orange">{{ stats.taux }}%</div>
-        <div class="stat-label">Taux de présélection</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Graphiques Avancés -->
-  <style>
-    .chart-card {
-      background: #fff;
-      border-radius: 16px;
-      box-shadow: 0 4px 24px rgba(26,58,92,.08);
-      padding: 22px;
-      transition: transform .2s, box-shadow .2s;
-      position: relative;
-      overflow: hidden;
-    }
-    .chart-card:hover { transform: translateY(-3px); box-shadow: 0 8px 32px rgba(26,58,92,.14); }
-    .chart-card::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; right: 0;
-      height: 4px;
-      background: var(--stripe, #0D5724);
-      border-radius: 16px 16px 0 0;
-    }
-    .chart-label {
-      font-size: .7rem;
-      font-weight: 700;
-      letter-spacing: .08em;
-      text-transform: uppercase;
-      color: #94A3B8;
-      margin-bottom: 2px;
-    }
-    .chart-title {
-      font-size: 1rem;
-      font-weight: 700;
-      color: #0D5724;
-    }
-    .chart-icon {
-      width: 38px; height: 38px; border-radius: 10px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 1rem; flex-shrink: 0;
-    }
-    .score-bar-wrap { display: flex; flex-direction: column; gap: 10px; }
-    .score-bar-row { display: flex; align-items: center; gap: 10px; font-size: .85rem; }
-    .score-bar-track {
-      flex: 1; height: 10px; border-radius: 99px;
-      background: #F0F4F8; overflow: hidden;
-    }
-    .score-bar-fill {
-      height: 100%; border-radius: 99px;
-      transition: width 1.2s cubic-bezier(.4,0,.2,1);
-    }
-    .score-bar-label { width: 100px; color: #64748B; font-weight: 500; }
-    .score-bar-val { width: 32px; text-align: right; font-weight: 700; color: #0D5724; }
-    @keyframes fadeUp { from { opacity:0; transform:translateY(18px); } to { opacity:1; transform:translateY(0); } }
-    .chart-card { animation: fadeUp .5s ease both; }
-    .chart-card:nth-child(1) { animation-delay: .05s; }
-    .chart-card:nth-child(2) { animation-delay: .12s; }
-    .chart-card:nth-child(3) { animation-delay: .19s; }
-    .chart-card:nth-child(4) { animation-delay: .26s; }
-  </style>
-
-  <div class="row g-3 mb-4">
-    <!-- Donut Décisions -->
-    <div class="col-lg-3 col-md-6">
-      <div class="chart-card h-100" style="--stripe:#0D5724;">
-        <div class="d-flex align-items-start gap-3 mb-3">
-          <div class="chart-icon" style="background:#EEF3F8;">
-            <i class="fas fa-brain" style="color:#0D5724;"></i>
-          </div>
+    <!-- ── KPI cards ───────────────────────────────────── -->
+    <div class="row g-3 kpi-row mb-4">
+      <div class="col-6 col-md au-1">
+        <div class="kpi-card green h-100">
+          <div class="kpi-icon green"><i class="fas fa-users"></i></div>
           <div>
-            <div class="chart-label">Résultats IA</div>
-            <div class="chart-title">Présélection</div>
-          </div>
-        </div>
-        <div style="position:relative;max-width:200px;margin:0 auto;">
-          <canvas id="chartDecision"></canvas>
-          <div id="donutCenter" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:none;">
-            <div id="donutPct" style="font-size:1.8rem;font-weight:800;color:#0D5724;line-height:1;">0%</div>
-            <div style="font-size:.65rem;color:#94A3B8;font-weight:600;letter-spacing:.06em;text-transform:uppercase;">taux</div>
-          </div>
-        </div>
-        <div class="d-flex justify-content-around mt-3">
-          <div class="text-center">
-            <div style="font-size:1.25rem;font-weight:800;color:#10B981;">{{ stats.preselectionnes }}</div>
-            <div style="font-size:.7rem;color:#94A3B8;font-weight:600;">Présélectionnés</div>
-          </div>
-          <div style="width:1px;background:#F0F4F8;"></div>
-          <div class="text-center">
-            <div style="font-size:1.25rem;font-weight:800;color:#E66210;">{{ stats.a_examiner }}</div>
-            <div style="font-size:.7rem;color:#94A3B8;font-weight:600;">À examiner</div>
-          </div>
-          <div style="width:1px;background:#F0F4F8;"></div>
-          <div class="text-center">
-            <div style="font-size:1.25rem;font-weight:800;color:#EF4444;">{{ stats.non_retenus }}</div>
-            <div style="font-size:.7rem;color:#94A3B8;font-weight:600;">Non retenus</div>
+            <div class="kpi-val green">{{ stats.total }}</div>
+            <div class="kpi-label">Candidatures</div>
           </div>
         </div>
       </div>
-    </div>
-
-    <!-- Barres Diplômes -->
-    <div class="col-lg-3 col-md-6">
-      <div class="chart-card h-100" style="--stripe:#E66210;">
-        <div class="d-flex align-items-start gap-3 mb-3">
-          <div class="chart-icon" style="background:#FBF5E6;">
-            <i class="fas fa-graduation-cap" style="color:#E66210;"></i>
-          </div>
+      <div class="col-6 col-md au-2">
+        <div class="kpi-card emerald h-100">
+          <div class="kpi-icon emerald"><i class="fas fa-check-circle"></i></div>
           <div>
-            <div class="chart-label">Formation</div>
-            <div class="chart-title">Diplômes</div>
+            <div class="kpi-val emerald">{{ stats.preselectionnes }}</div>
+            <div class="kpi-label">Présélectionnés</div>
           </div>
         </div>
-        <div class="score-bar-wrap" id="diplomesBars"></div>
       </div>
-    </div>
-
-    <!-- Polar Postes -->
-    <div class="col-lg-3 col-md-6">
-      <div class="chart-card h-100" style="--stripe:#6366F1;">
-        <div class="d-flex align-items-start gap-3 mb-3">
-          <div class="chart-icon" style="background:#EEEEFF;">
-            <i class="fas fa-briefcase" style="color:#6366F1;"></i>
-          </div>
+      <div class="col-6 col-md au-3">
+        <div class="kpi-card orange h-100">
+          <div class="kpi-icon orange"><i class="fas fa-clock"></i></div>
           <div>
-            <div class="chart-label">Recrutement</div>
-            <div class="chart-title">Postes</div>
+            <div class="kpi-val orange">{{ stats.a_examiner }}</div>
+            <div class="kpi-label">À examiner</div>
           </div>
         </div>
-        <canvas id="chartPoste" height="220"></canvas>
       </div>
-    </div>
-
-    <!-- Distribution scores -->
-    <div class="col-lg-3 col-md-6">
-      <div class="chart-card h-100" style="--stripe:#10B981;">
-        <div class="d-flex align-items-start gap-3 mb-3">
-          <div class="chart-icon" style="background:#ECFDF5;">
-            <i class="fas fa-chart-area" style="color:#10B981;"></i>
-          </div>
+      <div class="col-6 col-md au-4">
+        <div class="kpi-card red h-100">
+          <div class="kpi-icon red"><i class="fas fa-times-circle"></i></div>
           <div>
-            <div class="chart-label">Distribution</div>
-            <div class="chart-title">Scores IA</div>
+            <div class="kpi-val red">{{ stats.non_retenus }}</div>
+            <div class="kpi-label">Non retenus</div>
           </div>
         </div>
-        <canvas id="chartScores" height="220"></canvas>
+      </div>
+      <div class="col-6 col-md au-5">
+        <div class="kpi-card blue h-100">
+          <div class="kpi-icon blue"><i class="fas fa-percentage"></i></div>
+          <div>
+            <div class="kpi-val blue">{{ stats.taux }}%</div>
+            <div class="kpi-label">Taux présélection</div>
+          </div>
+        </div>
       </div>
     </div>
-  </div>
 
-  <!-- Filtres -->
-  <div class="card mb-3 p-3">
-    <div class="row g-2 align-items-center">
-      <div class="col-md-3">
-        <input type="text" id="searchInput" class="form-control" placeholder="Rechercher un candidat..."/>
+    <!-- ── Graphiques ───────────────────────────────────── -->
+    <div class="section-title">Analyse des candidatures</div>
+    <div class="row g-3 mb-4">
+
+      <!-- Donut -->
+      <div class="col-lg-3 col-md-6">
+        <div class="chart-card au au-1">
+          <div class="chart-card-title">
+            <span class="chart-dot" style="background:#0D5724;"></span>
+            Décisions IA
+          </div>
+          <div class="chart-card-sub">Répartition par statut</div>
+          <div style="position:relative; max-width:180px; margin:0 auto 16px;">
+            <canvas id="chartDecision" height="180"></canvas>
+            <div id="donutCenter">
+              <div id="donutPct">0%</div>
+              <div id="donutSub">taux</div>
+            </div>
+          </div>
+          <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; text-align:center;">
+            <div>
+              <div style="font-size:1.2rem;font-weight:800;color:#10B981;">{{ stats.preselectionnes }}</div>
+              <div style="font-size:.65rem;color:#94A3B8;font-weight:600;">Présélect.</div>
+            </div>
+            <div style="border-left:1px solid #F1F5F9; border-right:1px solid #F1F5F9;">
+              <div style="font-size:1.2rem;font-weight:800;color:#E66210;">{{ stats.a_examiner }}</div>
+              <div style="font-size:.65rem;color:#94A3B8;font-weight:600;">À examiner</div>
+            </div>
+            <div>
+              <div style="font-size:1.2rem;font-weight:800;color:#EF4444;">{{ stats.non_retenus }}</div>
+              <div style="font-size:.65rem;color:#94A3B8;font-weight:600;">Non ret.</div>
+            </div>
+          </div>
+        </div>
       </div>
-      <div class="col-md-2">
-        <select id="filterPoste" class="form-select">
-          <option value="">Tous les postes</option>
-          <option value="CGM">Chargé Gestion Marchés</option>
-          <option value="ARCHIVISTE">Aide Archiviste</option>
-          <option value="SI">Cadre SI</option>
-        </select>
+
+      <!-- Barres diplômes -->
+      <div class="col-lg-3 col-md-6">
+        <div class="chart-card au au-2">
+          <div class="chart-card-title">
+            <span class="chart-dot" style="background:#E66210;"></span>
+            Niveaux de diplôme
+          </div>
+          <div class="chart-card-sub">Répartition des formations</div>
+          <div id="diplomesBars"></div>
+        </div>
       </div>
-      <div class="col-md-2">
-        <select id="filterDecision" class="form-select">
-          <option value="">Toutes décisions</option>
-          <option value="Présélectionné">Présélectionnés</option>
-          <option value="À examiner">À examiner</option>
-          <option value="Non retenu">Non retenus</option>
-        </select>
+
+      <!-- Postes polar -->
+      <div class="col-lg-3 col-md-6">
+        <div class="chart-card au au-3">
+          <div class="chart-card-title">
+            <span class="chart-dot" style="background:#6366F1;"></span>
+            Postes visés
+          </div>
+          <div class="chart-card-sub">Candidatures par poste</div>
+          <canvas id="chartPoste" height="200"></canvas>
+        </div>
+      </div>
+
+      <!-- Distribution scores -->
+      <div class="col-lg-3 col-md-6">
+        <div class="chart-card au au-4">
+          <div class="chart-card-title">
+            <span class="chart-dot" style="background:#10B981;"></span>
+            Distribution des scores
+          </div>
+          <div class="chart-card-sub">Scores IA par tranche</div>
+          <canvas id="chartScores" height="200"></canvas>
+        </div>
       </div>
     </div>
-  </div>
 
-  <!-- Tableau candidats -->
-  <div class="card">
-    <div class="card-body p-0">
+    <!-- ── Filtres ────────────────────────────────────── -->
+    <div class="filter-bar">
+      <div class="row g-2 align-items-center">
+        <div class="col-md-4">
+          <div class="input-group" style="border:1.5px solid #E2E8F0; border-radius:9px; overflow:hidden;">
+            <span class="input-group-text" style="background:#F8FAFC; border:none; color:#94A3B8;">
+              <i class="fas fa-search" style="font-size:.8rem;"></i>
+            </span>
+            <input type="text" id="searchInput" class="form-control"
+                   style="border:none; box-shadow:none; font-size:.82rem;"
+                   placeholder="Rechercher un candidat..."/>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <select id="filterPoste" class="form-select">
+            <option value="">Tous les postes</option>
+            <option value="CGM">Chargé Gestion Marchés</option>
+            <option value="ARCHIVISTE">Aide Archiviste</option>
+            <option value="SI">Cadre SI</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <select id="filterDecision" class="form-select">
+            <option value="">Toutes décisions</option>
+            <option value="Présélectionné">Présélectionnés</option>
+            <option value="À examiner">À examiner</option>
+            <option value="Non retenu">Non retenus</option>
+          </select>
+        </div>
+        <div class="col-md-2 text-end">
+          <span id="countLabel" class="text-muted" style="font-size:.78rem; font-weight:600;"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Tableau ─────────────────────────────────────── -->
+    <div class="table-card">
       {% if candidats %}
       <div class="table-responsive">
-        <table class="table table-hover mb-0" id="tableCandidat">
+        <table class="table" id="tableCandidat">
           <thead>
             <tr>
-              <th>ID</th>
+              <th>#</th>
               <th>Candidat</th>
               <th>Poste</th>
               <th>Diplôme</th>
@@ -240,49 +394,75 @@
               <th>Score IA</th>
               <th>Décision</th>
               <th>Date dépôt</th>
-              <th>Action</th>
+              <th></th>
             </tr>
           </thead>
           <tbody>
             {% for c in candidats %}
             <tr data-poste="{{ c.poste }}" data-decision="{{ c.decision }}">
-              <td class="text-muted">{{ c.id }}</td>
-              <td><strong>{{ c.prenom }} {{ c.nom }}</strong><br>
-                  <small class="text-muted">{{ c.email }}</small></td>
+              <td style="color:#CBD5E1; font-weight:600; font-size:.75rem;">{{ c.id }}</td>
               <td>
-                {% if c.poste == 'CGM' %}
-                  <span class="badge bg-primary">Gestion Marchés</span>
-                {% elif c.poste == 'ARCHIVISTE' %}
-                  <span class="badge bg-info text-dark">Archiviste</span>
-                {% elif c.poste == 'SI' %}
-                  <span class="badge bg-secondary">Cadre SI</span>
-                {% else %}
-                  <span class="badge bg-dark">{{ c.poste }}</span>
+                <div style="font-weight:700; color:#1E293B; font-size:.83rem;">{{ c.prenom }} {{ c.nom }}</div>
+                {% if c.email %}
+                <div style="font-size:.7rem; color:#94A3B8;">{{ c.email }}</div>
                 {% endif %}
               </td>
-              <td>{{ c.diplome }}</td>
-              <td>{{ c.experience }} ans</td>
               <td>
-                <div class="progress" style="height:18px; width:90px;">
-                  <div class="progress-bar {% if c.score_ia >= 0.5 %}bg-success{% else %}bg-danger{% endif %}"
-                       style="width:{{ (c.score_ia * 100)|int }}%">
-                    {{ (c.score_ia * 100)|round(1) }}%
-                  </div>
-                </div>
+                {% if c.poste == 'CGM' %}
+                  <span class="badge-poste" style="background:#EEF2FF;color:#4338CA;">Gestion Marchés</span>
+                {% elif c.poste == 'ARCHIVISTE' %}
+                  <span class="badge-poste" style="background:#F0FDFA;color:#0F766E;">Archiviste</span>
+                {% elif c.poste == 'SI' %}
+                  <span class="badge-poste" style="background:#F5F3FF;color:#6D28D9;">Cadre SI</span>
+                {% else %}
+                  <span class="badge-poste" style="background:#F1F5F9;color:#475569;">{{ c.poste }}</span>
+                {% endif %}
+              </td>
+              <td style="color:#475569; font-size:.82rem;">{{ c.diplome }}</td>
+              <td style="color:#475569; font-size:.82rem; white-space:nowrap;">
+                <i class="fas fa-briefcase" style="color:#CBD5E1; font-size:.7rem; margin-right:4px;"></i>
+                {{ c.experience }} an{{ 's' if c.experience != 1 }}
+              </td>
+              <td>
+                {% set score_pct = (c.score_ia * 100) | round(1) %}
+                {% if score_pct >= 50 %}
+                  <span class="score-pill high">
+                    <i class="fas fa-circle" style="font-size:.4rem;"></i>
+                    {{ score_pct }}%
+                  </span>
+                {% elif score_pct >= 35 %}
+                  <span class="score-pill mid">
+                    <i class="fas fa-circle" style="font-size:.4rem;"></i>
+                    {{ score_pct }}%
+                  </span>
+                {% else %}
+                  <span class="score-pill low">
+                    <i class="fas fa-circle" style="font-size:.4rem;"></i>
+                    {{ score_pct }}%
+                  </span>
+                {% endif %}
               </td>
               <td>
                 {% if c.decision == "Présélectionné" %}
-                  <span class="badge bg-success"><i class="fas fa-check me-1"></i>Présélectionné</span>
+                  <span class="badge-decision presel">
+                    <i class="fas fa-check" style="font-size:.65rem;"></i> Présélectionné
+                  </span>
                 {% elif c.decision == "À examiner" %}
-                  <span class="badge" style="background:#E66210;"><i class="fas fa-exclamation-triangle me-1"></i>À examiner</span>
+                  <span class="badge-decision exam">
+                    <i class="fas fa-hourglass-half" style="font-size:.65rem;"></i> À examiner
+                  </span>
                 {% else %}
-                  <span class="badge bg-danger"><i class="fas fa-times me-1"></i>Non retenu</span>
+                  <span class="badge-decision non">
+                    <i class="fas fa-times" style="font-size:.65rem;"></i> Non retenu
+                  </span>
                 {% endif %}
               </td>
-              <td><small class="text-muted">{{ c.date_depot.strftime('%d/%m/%Y') if c.date_depot else '' }}</small></td>
+              <td style="font-size:.75rem; color:#94A3B8; white-space:nowrap;">
+                {{ c.date_depot.strftime('%d/%m/%Y') if c.date_depot else '—' }}
+              </td>
               <td>
-                <a href="/candidat/{{ c.id }}" class="btn btn-sm btn-ader">
-                  <i class="fas fa-eye"></i>
+                <a href="/candidat/{{ c.id }}" class="btn-voir">
+                  <i class="fas fa-eye"></i> Voir
                 </a>
               </td>
             </tr>
@@ -291,124 +471,121 @@
         </table>
       </div>
       {% else %}
-      <div class="text-center py-5 text-muted">
-        <i class="fas fa-inbox fa-3x mb-3"></i>
+      <div class="empty-state">
+        <i class="fas fa-inbox"></i>
         <p>Aucune candidature pour le moment.</p>
         <a href="/candidature" class="btn btn-ader">Ajouter une candidature</a>
       </div>
       {% endif %}
     </div>
-  </div>
 
-</div><!-- /.container-xl -->
+  </div><!-- /.container-xl -->
+</div><!-- /.dash-wrap -->
 {% endblock %}
 
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-// ── Données brutes ────────────────────────────────────────────
-const presel     = {{ stats.preselectionnes }};
-const aExaminer  = {{ stats.a_examiner }};
-const nonRet     = {{ stats.non_retenus }};
-const total      = {{ stats.total }};
-const taux       = {{ stats.taux }};
+const presel    = {{ stats.preselectionnes }};
+const aExaminer = {{ stats.a_examiner }};
+const nonRet    = {{ stats.non_retenus }};
+const total     = {{ stats.total }};
+const taux      = {{ stats.taux }};
 
-const diplomes = {};
-const postesMap = {};
-const scores   = [];
+const diplomes = {}, postesMap = {}, scores = [];
 {% for c in candidats %}
   diplomes["{{ c.diplome }}"] = (diplomes["{{ c.diplome }}"] || 0) + 1;
   postesMap["{{ c.poste }}"]  = (postesMap["{{ c.poste }}"]  || 0) + 1;
   scores.push({{ (c.score_ia * 100) | round(1) }});
 {% endfor %}
 
-// ── 1. Donut Décisions ────────────────────────────────────────
+// ── 1. Donut ───────────────────────────────────────
 const ctxD = document.getElementById('chartDecision').getContext('2d');
-const gradGreen = ctxD.createLinearGradient(0,0,0,200);
-gradGreen.addColorStop(0,'#34D399'); gradGreen.addColorStop(1,'#059669');
-const gradOrange = ctxD.createLinearGradient(0,0,0,200);
-gradOrange.addColorStop(0,'#FB923C'); gradOrange.addColorStop(1,'#E66210');
-const gradRed = ctxD.createLinearGradient(0,0,0,200);
-gradRed.addColorStop(0,'#F87171'); gradRed.addColorStop(1,'#DC2626');
-
 new Chart(ctxD, {
   type: 'doughnut',
   data: {
-    labels: ['Présélectionnés','À examiner','Non retenus'],
-    datasets: [{ data: [presel, aExaminer, nonRet],
-      backgroundColor: [gradGreen, gradOrange, gradRed],
-      borderWidth: 3, borderColor: '#fff', hoverOffset: 10
+    labels: ['Présélectionnés', 'À examiner', 'Non retenus'],
+    datasets: [{
+      data: [presel, aExaminer, nonRet],
+      backgroundColor: ['#10B981', '#E66210', '#EF4444'],
+      borderWidth: 3, borderColor: '#fff', hoverOffset: 8
     }]
   },
   options: {
-    cutout: '72%',
-    animation: { animateRotate: true, duration: 1200, easing: 'easeInOutQuart' },
+    cutout: '74%',
+    animation: { animateRotate: true, duration: 1100, easing: 'easeInOutQuart' },
     plugins: {
       legend: { display: false },
       tooltip: {
-        backgroundColor: '#0D5724',
-        titleFont: { size: 11 }, bodyFont: { size: 13, weight: 'bold' },
-        callbacks: { label: ctx => `  ${ctx.raw} candidat(s) — ${total ? Math.round(ctx.raw/total*100) : 0}%` }
+        backgroundColor: '#1E293B',
+        titleFont: { size: 11 }, bodyFont: { size: 12, weight: 'bold' },
+        callbacks: {
+          label: ctx => `  ${ctx.raw} candidat(s) — ${total ? Math.round(ctx.raw / total * 100) : 0}%`
+        }
       }
     }
   }
 });
 
-// Animer le % dans le centre du donut
+// Animer le % centre
 let pct = 0;
-const target = taux;
 const timer = setInterval(() => {
-  pct = Math.min(pct + 2, target);
+  pct = Math.min(pct + 2, taux);
   document.getElementById('donutPct').textContent = pct.toFixed(0) + '%';
-  if (pct >= target) clearInterval(timer);
-}, 20);
+  if (pct >= taux) clearInterval(timer);
+}, 18);
 
-// ── 2. Barres Diplômes (HTML animées) ────────────────────────
-const colors = ['#0D5724','#E66210','#6366F1','#10B981','#F59E0B'];
+// ── 2. Barres diplômes ─────────────────────────────
+const dColors = ['#0D5724', '#E66210', '#6366F1', '#10B981', '#F59E0B', '#06B6D4'];
 const dWrap = document.getElementById('diplomesBars');
 const maxD = Math.max(...Object.values(diplomes), 1);
-Object.entries(diplomes).sort((a,b)=>b[1]-a[1]).forEach(([label, val], i) => {
-  const pct = Math.round(val / maxD * 100);
-  const color = colors[i % colors.length];
-  dWrap.innerHTML += `
-    <div class="score-bar-row">
-      <div class="score-bar-label" style="font-size:.78rem;">${label}</div>
-      <div class="score-bar-track">
-        <div class="score-bar-fill" data-w="${pct}" style="width:0%;background:${color};"></div>
-      </div>
-      <div class="score-bar-val">${val}</div>
-    </div>`;
+Object.entries(diplomes).sort((a,b) => b[1] - a[1]).forEach(([label, val], i) => {
+  const pctW = Math.round(val / maxD * 100);
+  const color = dColors[i % dColors.length];
+  const row = document.createElement('div');
+  row.className = 'sbar-row';
+  row.innerHTML = `
+    <div class="sbar-name" title="${label}">${label}</div>
+    <div class="sbar-track">
+      <div class="sbar-fill" data-w="${pctW}" style="width:0%;background:${color};"></div>
+    </div>
+    <div class="sbar-count">${val}</div>`;
+  dWrap.appendChild(row);
 });
 setTimeout(() => {
-  document.querySelectorAll('.score-bar-fill').forEach(el => {
-    el.style.width = el.dataset.w + '%';
-  });
-}, 100);
+  document.querySelectorAll('.sbar-fill').forEach(el => el.style.width = el.dataset.w + '%');
+}, 120);
 
-// ── 3. Polar Area Postes ──────────────────────────────────────
+// ── 3. Polar postes ────────────────────────────────
+const posteLabels = Object.keys(postesMap).map(k => {
+  if (k === 'CGM') return 'Gestion Marchés';
+  if (k === 'ARCHIVISTE') return 'Archiviste';
+  if (k === 'SI') return 'Cadre SI';
+  return k;
+});
 new Chart(document.getElementById('chartPoste'), {
   type: 'polarArea',
   data: {
-    labels: Object.keys(postesMap),
+    labels: posteLabels,
     datasets: [{
       data: Object.values(postesMap),
-      backgroundColor: ['rgba(99,102,241,.75)','rgba(26,58,92,.75)','rgba(200,168,75,.75)','rgba(16,185,129,.75)'],
+      backgroundColor: ['rgba(99,102,241,.7)', 'rgba(13,87,36,.7)', 'rgba(230,98,16,.7)', 'rgba(16,185,129,.7)'],
       borderColor: '#fff', borderWidth: 2
     }]
   },
   options: {
     animation: { duration: 1000, easing: 'easeInOutQuart' },
     plugins: {
-      legend: { position: 'bottom', labels: { font: { size: 11 }, padding: 12 } },
-      tooltip: { backgroundColor: '#0D5724' }
+      legend: { position: 'bottom', labels: { font: { size: 10 }, padding: 10, color: '#64748B' } },
+      tooltip: { backgroundColor: '#1E293B' }
     },
-    scales: { r: { ticks: { display: false }, grid: { color: 'rgba(0,0,0,.06)' } } }
+    scales: { r: { ticks: { display: false }, grid: { color: 'rgba(0,0,0,.05)' } } }
   }
 });
 
-// ── 4. Histogramme Distribution Scores ────────────────────────
-const buckets = ['0-20','20-40','40-60','60-80','80-100'];
-const counts  = [0,0,0,0,0];
+// ── 4. Histogramme scores ──────────────────────────
+const buckets = ['0–20', '20–40', '40–60', '60–80', '80–100'];
+const counts  = [0, 0, 0, 0, 0];
 scores.forEach(s => {
   if (s < 20) counts[0]++;
   else if (s < 40) counts[1]++;
@@ -416,22 +593,16 @@ scores.forEach(s => {
   else if (s < 80) counts[3]++;
   else counts[4]++;
 });
-const ctxS = document.getElementById('chartScores').getContext('2d');
-const gradScore = ctxS.createLinearGradient(0, 0, 0, 220);
-gradScore.addColorStop(0,'rgba(16,185,129,.9)');
-gradScore.addColorStop(1,'rgba(16,185,129,.2)');
 
-new Chart(ctxS, {
+new Chart(document.getElementById('chartScores'), {
   type: 'bar',
   data: {
     labels: buckets,
     datasets: [{
       label: 'Candidats',
       data: counts,
-      backgroundColor: counts.map((_, i) =>
-        i < 2 ? 'rgba(239,68,68,.7)' : i === 2 ? 'rgba(245,158,11,.7)' : 'rgba(16,185,129,.8)'
-      ),
-      borderRadius: 8, borderSkipped: false,
+      backgroundColor: ['#FCA5A5', '#FCD34D', '#FCD34D', '#6EE7B7', '#10B981'],
+      borderRadius: 7, borderSkipped: false
     }]
   },
   options: {
@@ -439,39 +610,47 @@ new Chart(ctxS, {
     plugins: {
       legend: { display: false },
       tooltip: {
-        backgroundColor: '#0D5724',
-        callbacks: { title: ctx => `Score : ${ctx[0].label}%`, label: ctx => ` ${ctx.raw} candidat(s)` }
+        backgroundColor: '#1E293B',
+        callbacks: {
+          title: ctx => `Score : ${ctx[0].label}%`,
+          label: ctx => ` ${ctx.raw} candidat(s)`
+        }
       }
     },
     scales: {
-      y: { beginAtZero: true, ticks: { stepSize: 1, color: '#94A3B8' },
-        grid: { color: 'rgba(0,0,0,.04)' } },
-      x: { ticks: { color: '#64748B', font: { size: 11 } }, grid: { display: false } }
+      y: {
+        beginAtZero: true, ticks: { stepSize: 1, color: '#94A3B8', font: { size: 10 } },
+        grid: { color: 'rgba(0,0,0,.04)' }
+      },
+      x: { ticks: { color: '#64748B', font: { size: 10 } }, grid: { display: false } }
     }
   }
 });
 
-// Recherche et filtre
+// ── Filtres & compteur ─────────────────────────────
+const rows = () => document.querySelectorAll('#tableCandidat tbody tr');
+
+function updateCount() {
+  const visible = [...rows()].filter(r => r.style.display !== 'none').length;
+  document.getElementById('countLabel').textContent = `${visible} résultat${visible !== 1 ? 's' : ''}`;
+}
+
 function filtrer() {
   const search = document.getElementById('searchInput').value.toLowerCase();
   const poste  = document.getElementById('filterPoste').value;
   const dec    = document.getElementById('filterDecision').value;
-
-  document.querySelectorAll('#tableCandidat tbody tr').forEach(row => {
-    const texte   = row.innerText.toLowerCase();
-    const rPoste  = row.dataset.poste;
-    const rDec    = row.dataset.decision;
-
-    const okSearch = texte.includes(search);
-    const okPoste  = !poste || rPoste === poste;
-    const okDec    = !dec   || rDec   === dec;
-
-    row.style.display = okSearch && okPoste && okDec ? '' : 'none';
+  rows().forEach(row => {
+    const ok = row.innerText.toLowerCase().includes(search)
+      && (!poste || row.dataset.poste === poste)
+      && (!dec   || row.dataset.decision === dec);
+    row.style.display = ok ? '' : 'none';
   });
+  updateCount();
 }
 
 document.getElementById('searchInput').addEventListener('input', filtrer);
 document.getElementById('filterPoste').addEventListener('change', filtrer);
 document.getElementById('filterDecision').addEventListener('change', filtrer);
+updateCount();
 </script>
 {% endblock %}
