@@ -3,7 +3,7 @@
   "configurations": [
     {
       "name": "RecrutIA Flask",
-      "runtimeExecutable": "python",
+      "runtimeExecutable": "C:\\Users\\Amine\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\\python.exe",
       "runtimeArgs": ["app.py"],
       "port": 5000
     }
