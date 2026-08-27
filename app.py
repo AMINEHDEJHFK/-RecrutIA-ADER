@@ -265,6 +265,14 @@ class UtilisateurRH(db.Model):
 
 with app.app_context():
     db.create_all()
+
+    # Migration automatique : ajouter jury_numero si absent (ex: BDD existante sur Railway)
+    try:
+        db.session.execute(db.text("ALTER TABLE utilisateur_rh ADD COLUMN jury_numero INTEGER"))
+        db.session.commit()
+    except Exception:
+        db.session.rollback()  # colonne déjà présente, on ignore
+
     # Créer le compte admin par défaut s'il n'existe pas
     if not UtilisateurRH.query.filter_by(username="admin").first():
         admin = UtilisateurRH(nom="Administrateur", prenom="ADER",
@@ -272,6 +280,20 @@ with app.app_context():
         admin.set_password("ader2024")
         db.session.add(admin)
         db.session.commit()
+
+    # Créer les 4 comptes jury s'ils n'existent pas
+    jurys = [
+        ("bouchra.ader",   "Bouchra", "Ouchene",     "bouchraader", 1),
+        ("ali.ader",       "Ali",     "Rhamni",       "aliader",     2),
+        ("younnes.benjalloun", "Younnes", "Benjalloun", "younnesader", 3),
+        ("fati.ader",      "Fati",    "Rbiki",        "fatiader",    4),
+    ]
+    for username, prenom, nom, mdp, num in jurys:
+        if not UtilisateurRH.query.filter_by(username=username).first():
+            u = UtilisateurRH(nom=nom, prenom=prenom, username=username, role="jury", jury_numero=num)
+            u.set_password(mdp)
+            db.session.add(u)
+    db.session.commit()
 
 # ─── FONCTIONS UTILITAIRES ─────────────────────────────────────────────────────
 
