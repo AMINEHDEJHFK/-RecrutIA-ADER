@@ -571,7 +571,10 @@ Règles :
             messages=[{"role": "user", "content": prompt}]
         )
         return message.content[0].text
-    except Exception:
+    except Exception as e:
+        import traceback
+        print(f"[ERREUR GENERATION QUESTIONS] {e}")
+        traceback.print_exc()
         return None
 
 
