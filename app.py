@@ -347,6 +347,76 @@ with app.app_context():
             db.session.add(EvaluationJury(**e))
         db.session.commit()
 
+    # ── Seed supplémentaire : 5 nouvelles offres + 20 nouveaux candidats ─────
+    if not Offre.query.get(5):
+        nouvelles_offres = [
+            dict(id=5, titre="Responsable Comptabilité et Finance", poste="Responsable Comptabilité", nombre_postes=1,
+                 diplome_requis="Master en Finance, Comptabilité ou ISCAE", experience_min=3,
+                 specialite="Finance/Comptabilité", langues="Français, Arabe",
+                 missions="Tenue de la comptabilité générale et analytique ; Élaboration des états financiers ; Suivi budgétaire ; Déclarations fiscales et sociales ; Relation avec les auditeurs et experts comptables.",
+                 competences="Maîtrise Sage ou ERP comptable ; Excel avancé ; Connaissance fiscalité marocaine ; Rigueur et organisation.",
+                 mots_cles="comptabilité,finance,bilan,fiscalité,audit", date_limite="31/10/2026", actif=True),
+            dict(id=6, titre="Technicien Réseaux et Informatique", poste="Technicien Réseaux", nombre_postes=2,
+                 diplome_requis="Bac+2 ou Bac+3 en Informatique / Réseaux et Télécommunications", experience_min=1,
+                 specialite="Informatique/Réseaux", langues="Français, Arabe",
+                 missions="Maintenance du parc informatique ; Administration réseau LAN/WAN ; Support utilisateurs niveau 1 et 2 ; Gestion des sauvegardes et de la sécurité informatique.",
+                 competences="Cisco, Windows Server, Active Directory, ticketing ; Sens du service.",
+                 mots_cles="informatique,réseau,maintenance,support,cisco", date_limite="31/10/2026", actif=True),
+            dict(id=7, titre="Juriste / Conseiller Juridique", poste="Juriste", nombre_postes=1,
+                 diplome_requis="Master en Droit des affaires ou Droit public", experience_min=2,
+                 specialite="Droit", langues="Français, Arabe, Anglais apprécié",
+                 missions="Rédaction et révision des contrats et marchés publics ; Veille juridique et réglementaire ; Conseil aux directions opérationnelles ; Gestion des contentieux.",
+                 competences="Maîtrise du droit marocain des marchés publics ; Rédaction juridique précise ; Gestion des délais.",
+                 mots_cles="droit,juridique,contrat,marchés publics,contentieux", date_limite="31/10/2026", actif=True),
+            dict(id=8, titre="Responsable Ressources Humaines", poste="Responsable RH", nombre_postes=1,
+                 diplome_requis="Master en GRH, Management ou Sciences Sociales", experience_min=3,
+                 specialite="Ressources Humaines", langues="Français, Arabe",
+                 missions="Recrutement et intégration des nouveaux collaborateurs ; Gestion de la paie et des déclarations sociales ; Élaboration du plan de formation ; Suivi des indicateurs RH ; Gestion des relations sociales.",
+                 competences="Droit social marocain ; SIRH ; Capacités relationnelles et de médiation ; Excel RH.",
+                 mots_cles="RH,recrutement,paie,formation,gestion sociale", date_limite="31/10/2026", actif=True),
+            dict(id=9, titre="Ingénieur Génie Civil", poste="Ingénieur Génie Civil", nombre_postes=1,
+                 diplome_requis="Ingénieur d'État ou Master en Génie Civil / BTP", experience_min=2,
+                 specialite="Génie Civil / BTP", langues="Français, Arabe",
+                 missions="Étude et suivi des projets de construction et réhabilitation ; Contrôle de la qualité des travaux ; Rédaction des rapports techniques ; Coordination avec les entreprises prestataires ; Réception des travaux.",
+                 competences="AutoCAD, Revit ou BIM ; Connaissance CCAG Travaux ; Gestion de chantier ; Métrés et devis.",
+                 mots_cles="génie civil,construction,chantier,BTP,structure", date_limite="31/10/2026", actif=True),
+        ]
+        for o in nouvelles_offres:
+            db.session.add(Offre(**o))
+        db.session.commit()
+
+    if not Candidat.query.get(21):
+        nouveaux_candidats = [
+            # Offre 5 — Comptabilité (4 candidats)
+            dict(id=21, nom="FILALI",    prenom="Kenza",    email="kenza.filali@gmail.com",    telephone="0661001001", poste="Responsable Comptabilité", diplome="MASTER",  specialite="Finance et Comptabilité",        ecole="ENCG Fès",                  promotion=2021, experience=4, score_ia=0.87,  decision="Présélectionné", decision_manuelle=False, offre_id=5),
+            dict(id=22, nom="BENKIRANE", prenom="Hamza",    email="hamza.benkirane@gmail.com",  telephone="0662002002", poste="Responsable Comptabilité", diplome="MASTER",  specialite="Comptabilité et Audit",          ecole="ISCAE Casablanca",          promotion=2020, experience=5, score_ia=0.91,  decision="Présélectionné", decision_manuelle=False, offre_id=5),
+            dict(id=23, nom="ALAOUI",    prenom="Rim",      email="rim.alaoui@gmail.com",       telephone="0663003003", poste="Responsable Comptabilité", diplome="LICENCE", specialite="Sciences de Gestion",            ecole="FSJES Fès",                 promotion=2023, experience=1, score_ia=0.38,  decision="Non retenu",     decision_manuelle=False, offre_id=5),
+            dict(id=24, nom="TAHIRI",    prenom="Youssef",  email="youssef.tahiri@gmail.com",   telephone="0664004004", poste="Responsable Comptabilité", diplome="MASTER",  specialite="Finance d'Entreprise",           ecole="UIR Rabat",                 promotion=2022, experience=2, score_ia=0.61,  decision="Non retenu",     decision_manuelle=False, offre_id=5),
+            # Offre 6 — Technicien Réseaux (4 candidats)
+            dict(id=25, nom="MANSOURI",  prenom="Anas",     email="anas.mansouri@gmail.com",    telephone="0665005005", poste="Technicien Réseaux",       diplome="TECHNICIEN SPECIALISE", specialite="Réseaux et Télécommunications", ecole="ISTA Fès",          promotion=2023, experience=2, score_ia=0.78,  decision="Présélectionné", decision_manuelle=False, offre_id=6),
+            dict(id=26, nom="SQALLI",    prenom="Meryem",   email="meryem.sqalli@gmail.com",    telephone="0666006006", poste="Technicien Réseaux",       diplome="LICENCE", specialite="Informatique et Réseaux",        ecole="Université Sidi Mohamed",   promotion=2022, experience=3, score_ia=0.82,  decision="Présélectionné", decision_manuelle=False, offre_id=6),
+            dict(id=27, nom="GUESSOUS",  prenom="Bilal",    email="bilal.guessous@gmail.com",   telephone="0667007007", poste="Technicien Réseaux",       diplome="BAC",     specialite="Sciences Mathématiques",         ecole="Lycée Ibn Khaldoun",        promotion=2024, experience=0, score_ia=0.12,  decision="Non retenu",     decision_manuelle=False, offre_id=6),
+            dict(id=28, nom="LAHRICHI",  prenom="Sara",     email="sara.lahrichi@gmail.com",    telephone="0668008008", poste="Technicien Réseaux",       diplome="TECHNICIEN SPECIALISE", specialite="Développement Informatique",    ecole="OFPPT Fès",         promotion=2023, experience=1, score_ia=0.55,  decision="Non retenu",     decision_manuelle=False, offre_id=6),
+            # Offre 7 — Juriste (4 candidats)
+            dict(id=29, nom="CHRAIBI",   prenom="Dounia",   email="dounia.chraibi@gmail.com",   telephone="0669009009", poste="Juriste",                  diplome="MASTER",  specialite="Droit des Affaires",             ecole="Université Mohammed V",     promotion=2021, experience=4, score_ia=0.88,  decision="Présélectionné", decision_manuelle=False, offre_id=7),
+            dict(id=30, nom="KETTANI",   prenom="Omar",     email="omar.kettani@gmail.com",     telephone="0660010010", poste="Juriste",                  diplome="MASTER",  specialite="Droit Public",                   ecole="Université Cadi Ayyad",     promotion=2022, experience=3, score_ia=0.79,  decision="Présélectionné", decision_manuelle=False, offre_id=7),
+            dict(id=31, nom="BENJELLOUN",prenom="Nour",     email="nour.benjelloun@gmail.com",  telephone="0661011011", poste="Juriste",                  diplome="LICENCE", specialite="Droit Privé",                    ecole="FSJES Meknès",              promotion=2024, experience=0, score_ia=0.31,  decision="Non retenu",     decision_manuelle=False, offre_id=7),
+            dict(id=32, nom="FASSI",     prenom="Tarik",    email="tarik.fassi@gmail.com",      telephone="0662012012", poste="Juriste",                  diplome="MASTER",  specialite="Droit des Marchés Publics",      ecole="ENA Rabat",                 promotion=2020, experience=5, score_ia=0.93,  decision="Présélectionné", decision_manuelle=False, offre_id=7),
+            # Offre 8 — RH (4 candidats)
+            dict(id=33, nom="TAZI",      prenom="Lina",     email="lina.tazi@gmail.com",        telephone="0663013013", poste="Responsable RH",           diplome="MASTER",  specialite="Gestion des Ressources Humaines",ecole="ENCG Fès",                  promotion=2021, experience=4, score_ia=0.86,  decision="Présélectionné", decision_manuelle=False, offre_id=8),
+            dict(id=34, nom="CHERKAOUI", prenom="Mehdi",    email="mehdi.cherkaoui@gmail.com",  telephone="0664014014", poste="Responsable RH",           diplome="MASTER",  specialite="Management et Leadership",       ecole="HEM Fès",                   promotion=2020, experience=5, score_ia=0.89,  decision="Présélectionné", decision_manuelle=False, offre_id=8),
+            dict(id=35, nom="BENKIRAN",  prenom="Fatima",   email="fatima.benkiran@gmail.com",  telephone="0665015015", poste="Responsable RH",           diplome="LICENCE", specialite="Psychologie du Travail",         ecole="Université Sidi Mohamed",   promotion=2023, experience=1, score_ia=0.42,  decision="Non retenu",     decision_manuelle=False, offre_id=8),
+            dict(id=36, nom="RHALI",     prenom="Karim",    email="karim.rhali@gmail.com",      telephone="0666016016", poste="Responsable RH",           diplome="TECHNICIEN SPECIALISE", specialite="Secrétariat de Direction",      ecole="ISTA Fès",          promotion=2022, experience=2, score_ia=0.27,  decision="Non retenu",     decision_manuelle=False, offre_id=8),
+            # Offre 9 — Génie Civil (4 candidats)
+            dict(id=37, nom="BENSOUDA",  prenom="Yassir",   email="yassir.bensouda@gmail.com",  telephone="0667017017", poste="Ingénieur Génie Civil",    diplome="MASTER",  specialite="Génie Civil et Structures",      ecole="École Mohammadia d'Ingénieurs", promotion=2021, experience=4, score_ia=0.92, decision="Présélectionné", decision_manuelle=False, offre_id=9),
+            dict(id=38, nom="SEFRIOUI",  prenom="Hajar",    email="hajar.sefrioui@gmail.com",   telephone="0668018018", poste="Ingénieur Génie Civil",    diplome="MASTER",  specialite="BTP et Aménagement",             ecole="EHTP Casablanca",           promotion=2022, experience=3, score_ia=0.84,  decision="Présélectionné", decision_manuelle=False, offre_id=9),
+            dict(id=39, nom="LAZRAK",    prenom="Soufiane", email="soufiane.lazrak@gmail.com",  telephone="0669019019", poste="Ingénieur Génie Civil",    diplome="LICENCE", specialite="Génie Civil",                    ecole="FST Fès",                   promotion=2023, experience=1, score_ia=0.47,  decision="Non retenu",     decision_manuelle=False, offre_id=9),
+            dict(id=40, nom="OULHAJ",    prenom="Zineb",    email="zineb.oulhaj@gmail.com",     telephone="0660020020", poste="Ingénieur Génie Civil",    diplome="MASTER",  specialite="Géotechnique et Fondations",     ecole="École Hassania des Travaux Publics", promotion=2020, experience=5, score_ia=0.95, decision="Présélectionné", decision_manuelle=False, offre_id=9),
+        ]
+        for c in nouveaux_candidats:
+            db.session.add(Candidat(**c))
+        db.session.commit()
+
 # ─── FONCTIONS UTILITAIRES ─────────────────────────────────────────────────────
 
 def allowed_file(filename):
