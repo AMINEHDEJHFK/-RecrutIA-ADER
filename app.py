@@ -1279,18 +1279,21 @@ def offres():
 def creer_offre():
     if request.method == "POST":
         competences_saisies = request.form.get("competences", "").strip()
+        def trunc(val, n):
+            return (val or "")[:n]
+
         offre = Offre(
-            titre          = request.form.get("titre", "").strip(),
-            poste          = request.form.get("poste", "").strip(),
-            nombre_postes  = int(request.form.get("nombre_postes", 1)),
-            diplome_requis = request.form.get("diplome_requis", "").strip(),
-            experience_min = int(request.form.get("experience_min", 0)),
-            specialite     = request.form.get("specialite", "").strip(),
-            langues        = request.form.get("langues", "").strip(),
+            titre          = trunc(request.form.get("titre", ""), 200),
+            poste          = trunc(request.form.get("poste", ""), 100),
+            nombre_postes  = int(request.form.get("nombre_postes", 1) or 1),
+            diplome_requis = trunc(request.form.get("diplome_requis", ""), 100),
+            experience_min = int(request.form.get("experience_min", 0) or 0),
+            specialite     = trunc(request.form.get("specialite", ""), 200),
+            langues        = trunc(request.form.get("langues", ""), 200),
             missions       = request.form.get("missions", "").strip(),
             competences    = competences_saisies,
-            mots_cles      = extraire_mots_cles_offre(competences_saisies),
-            date_limite    = request.form.get("date_limite", "").strip(),
+            mots_cles      = trunc(extraire_mots_cles_offre(competences_saisies), 500),
+            date_limite    = trunc(request.form.get("date_limite", ""), 50),
             actif          = True,
         )
         db.session.add(offre)
