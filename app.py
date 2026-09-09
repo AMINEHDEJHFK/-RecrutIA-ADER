@@ -160,7 +160,7 @@ class Offre(db.Model):
     titre           = db.Column(db.String(200))
     poste           = db.Column(db.String(100))
     nombre_postes   = db.Column(db.Integer, default=1)
-    diplome_requis  = db.Column(db.String(100))
+    diplome_requis  = db.Column(db.Text)
     experience_min  = db.Column(db.Integer, default=0)
     specialite      = db.Column(db.String(200))
     langues         = db.Column(db.String(200))
@@ -1286,7 +1286,7 @@ def creer_offre():
             titre          = trunc(request.form.get("titre", ""), 200),
             poste          = trunc(request.form.get("poste", ""), 100),
             nombre_postes  = int(request.form.get("nombre_postes", 1) or 1),
-            diplome_requis = trunc(request.form.get("diplome_requis", ""), 100),
+            diplome_requis = request.form.get("diplome_requis", "").strip(),
             experience_min = int(request.form.get("experience_min", 0) or 0),
             specialite     = trunc(request.form.get("specialite", ""), 200),
             langues        = trunc(request.form.get("langues", ""), 200),
