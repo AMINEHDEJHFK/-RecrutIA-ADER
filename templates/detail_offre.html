@@ -80,16 +80,24 @@
   </div>
 
   <!-- Missions et compétences -->
-  {% if offre.missions or offre.competences %}
+  {% if offre.missions or offre.attributions or offre.competences or offre.criteres_performance %}
   <div class="card mb-4">
     <div class="card-body">
       {% if offre.missions %}
-      <h6 class="fw-bold mb-2" style="color:var(--vert);"><i class="fas fa-tasks me-1"></i>Missions</h6>
+      <h6 class="fw-bold mb-2" style="color:var(--vert);"><i class="fas fa-bullseye me-1"></i>Missions principales</h6>
       <p style="white-space:pre-wrap;">{{ offre.missions }}</p>
+      {% endif %}
+      {% if offre.attributions %}
+      <h6 class="fw-bold mb-2 mt-3" style="color:var(--vert);"><i class="fas fa-list-ul me-1"></i>Principales attributions</h6>
+      <p style="white-space:pre-wrap;">{{ offre.attributions }}</p>
       {% endif %}
       {% if offre.competences %}
       <h6 class="fw-bold mb-2 mt-3" style="color:var(--vert);"><i class="fas fa-star me-1"></i>Compétences requises</h6>
       <p style="white-space:pre-wrap;">{{ offre.competences }}</p>
+      {% endif %}
+      {% if offre.criteres_performance %}
+      <h6 class="fw-bold mb-2 mt-3" style="color:var(--vert);"><i class="fas fa-chart-bar me-1"></i>Critères de performance</h6>
+      <p style="white-space:pre-wrap;">{{ offre.criteres_performance }}</p>
       {% endif %}
     </div>
   </div>
