@@ -1069,6 +1069,61 @@ def detail_candidat(candidat_id):
                            match_competences=match_competences)
 
 
+def extraire_offre_ia(texte):
+    """Extrait les informations d'une annonce PDF via l'API Claude. Retourne None si indisponible."""
+    try:
+        import anthropic as anthropic_sdk
+        import json as json_module
+
+        api_key = os.environ.get("ANTHROPIC_API_KEY")
+        if not api_key:
+            return None
+
+        client = anthropic_sdk.Anthropic(api_key=api_key)
+        prompt = f"""Voici le texte d'une annonce de recrutement. Analyse-le et réponds UNIQUEMENT avec un objet JSON valide (sans texte avant/après, sans balises markdown), avec exactement ces champs :
+
+- "titre" : titre complet du poste (ex: "Chef de projets Architecte")
+- "poste" : type de poste court (ex: "Architecte", "Ingénieur civil")
+- "nombre_postes" : nombre de postes à pourvoir (entier, 1 si non précisé)
+- "diplome_requis" : diplôme demandé (ex: "Master", "Ingénieur", "Licence")
+- "experience_min" : années d'expérience minimum requises (entier, 0 si non précisé)
+- "specialite" : spécialité ou domaine requis (ex: "Architecture", "Génie Civil")
+- "langues" : langues requises séparées par des virgules (ex: "Arabe, Français")
+- "missions" : description des missions du poste (texte libre, 2-5 phrases)
+- "competences" : compétences et qualifications requises (texte libre)
+- "date_limite" : date limite de dépôt des candidatures (texte tel qu'écrit dans l'annonce, "" si absent)
+
+Si une information est absente, mets une chaîne vide "" (ou 0 pour les nombres entiers, 1 pour nombre_postes).
+
+Texte de l'annonce :
+{texte[:6000]}"""
+
+        message = client.messages.create(
+            model="claude-sonnet-4-6",
+            max_tokens=800,
+            messages=[{"role": "user", "content": prompt}]
+        )
+        reponse = message.content[0].text.strip()
+        reponse = re.sub(r"^```(?:json)?|```$", "", reponse, flags=re.MULTILINE).strip()
+        data = json_module.loads(reponse)
+
+        return {
+            "titre":          str(data.get("titre", "")).strip(),
+            "poste":          str(data.get("poste", "")).strip(),
+            "nombre_postes":  int(data.get("nombre_postes") or 1),
+            "diplome_requis": str(data.get("diplome_requis", "")).strip(),
+            "experience_min": int(data.get("experience_min") or 0),
+            "specialite":     str(data.get("specialite", "")).strip(),
+            "langues":        str(data.get("langues", "")).strip(),
+            "missions":       str(data.get("missions", "")).strip(),
+            "competences":    str(data.get("competences", "")).strip(),
+            "date_limite":    str(data.get("date_limite", "")).strip(),
+        }
+    except Exception as e:
+        print(f"Erreur extraction offre via IA : {e}")
+        return None
+
+
 def extraire_offre(filepath):
     """Extrait les informations d'une annonce de recrutement PDF."""
     infos = {
@@ -1080,6 +1135,11 @@ def extraire_offre(filepath):
     try:
         with pdfplumber.open(filepath) as pdf:
             texte = "\n".join(page.extract_text() or "" for page in pdf.pages)
+
+        # Essayer l'extraction via IA en priorité
+        infos_ia = extraire_offre_ia(texte)
+        if infos_ia:
+            return infos_ia
 
         lignes = [l.strip() for l in texte.split("\n") if l.strip()]
         texte_lower = texte.lower()
