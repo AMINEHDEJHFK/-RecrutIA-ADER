@@ -11,3 +11,4 @@ shap
 anthropic
 python-dotenv
 psycopg2-binary
+pdf2image

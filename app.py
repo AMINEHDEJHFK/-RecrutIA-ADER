@@ -1069,6 +1069,68 @@ def detail_candidat(candidat_id):
                            match_competences=match_competences)
 
 
+def extraire_offre_ia_image(filepath):
+    """Extrait les infos d'un PDF scanné (image) via Claude Vision. Retourne None si indisponible."""
+    try:
+        import anthropic as anthropic_sdk
+        import json as json_module
+        import base64
+        from pdf2image import convert_from_path
+
+        api_key = os.environ.get("ANTHROPIC_API_KEY")
+        if not api_key:
+            return None
+
+        # Convertir la 1ère page en image
+        pages = convert_from_path(filepath, dpi=200, first_page=1, last_page=2)
+        if not pages:
+            return None
+
+        prompt_text = """Voici une annonce de recrutement (image). Analyse-la et réponds UNIQUEMENT avec un objet JSON valide (sans texte avant/après, sans balises markdown), avec exactement ces champs :
+- "titre" : titre complet du poste
+- "poste" : type de poste court
+- "nombre_postes" : nombre de postes (entier, 1 si non précisé)
+- "diplome_requis" : diplôme demandé
+- "experience_min" : années d'expérience minimum (entier, 0 si non précisé)
+- "specialite" : spécialité ou domaine requis
+- "langues" : langues requises séparées par virgules
+- "missions" : description des missions (2-5 phrases)
+- "competences" : compétences requises
+- "date_limite" : date limite de candidature ("" si absente)"""
+
+        content = [{"type": "text", "text": prompt_text}]
+        for page in pages[:2]:
+            buf = io.BytesIO()
+            page.save(buf, format="JPEG", quality=85)
+            img_b64 = base64.standard_b64encode(buf.getvalue()).decode()
+            content.append({"type": "image", "source": {"type": "base64", "media_type": "image/jpeg", "data": img_b64}})
+
+        client = anthropic_sdk.Anthropic(api_key=api_key)
+        message = client.messages.create(
+            model="claude-sonnet-4-6",
+            max_tokens=800,
+            messages=[{"role": "user", "content": content}]
+        )
+        reponse = message.content[0].text.strip()
+        reponse = re.sub(r"^```(?:json)?|```$", "", reponse, flags=re.MULTILINE).strip()
+        data = json_module.loads(reponse)
+        return {
+            "titre":          str(data.get("titre", "")).strip(),
+            "poste":          str(data.get("poste", "")).strip(),
+            "nombre_postes":  int(data.get("nombre_postes") or 1),
+            "diplome_requis": str(data.get("diplome_requis", "")).strip(),
+            "experience_min": int(data.get("experience_min") or 0),
+            "specialite":     str(data.get("specialite", "")).strip(),
+            "langues":        str(data.get("langues", "")).strip(),
+            "missions":       str(data.get("missions", "")).strip(),
+            "competences":    str(data.get("competences", "")).strip(),
+            "date_limite":    str(data.get("date_limite", "")).strip(),
+        }
+    except Exception as e:
+        print(f"Erreur extraction offre via Vision : {e}")
+        return None
+
+
 def extraire_offre_ia(texte):
     """Extrait les informations d'une annonce PDF via l'API Claude. Retourne None si indisponible."""
     try:
@@ -1136,9 +1198,16 @@ def extraire_offre(filepath):
         with pdfplumber.open(filepath) as pdf:
             texte = "\n".join(page.extract_text() or "" for page in pdf.pages)
 
-        # Essayer l'extraction via IA en priorité
+        # PDF scanné (image) : utiliser Claude Vision
+        if len(texte.strip()) < 50:
+            infos_vision = extraire_offre_ia_image(filepath)
+            if infos_vision:
+                return infos_vision
+            return infos
+
+        # PDF avec texte : utiliser Claude texte
         infos_ia = extraire_offre_ia(texte)
-        if infos_ia:
+        if infos_ia and any(v for v in infos_ia.values() if str(v).strip() and str(v) not in ("0", "1")):
             return infos_ia
 
         lignes = [l.strip() for l in texte.split("\n") if l.strip()]
