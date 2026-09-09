@@ -550,7 +550,7 @@ def generer_questions(candidat):
         api_key = os.environ.get("ANTHROPIC_API_KEY")
         if not api_key:
             return None
-        client = anthropic_sdk.Anthropic(api_key=api_key)
+        client = anthropic_sdk.Anthropic(api_key=api_key, timeout=25.0)
         prompt = f"""Tu es expert RH pour l'Agence de Développement Régional de Fès-Meknès (ADER).
 Génère 10 questions d'entretien personnalisées pour ce candidat.
 
@@ -590,7 +590,7 @@ def extraire_cv_ia(texte):
         if not api_key:
             return None
 
-        client = anthropic_sdk.Anthropic(api_key=api_key)
+        client = anthropic_sdk.Anthropic(api_key=api_key, timeout=25.0)
         prompt = f"""Nous sommes en {datetime.now().year}. Voici le texte extrait d'un CV. Analyse-le et réponds UNIQUEMENT avec un objet JSON valide (sans texte avant/après, sans balises markdown), avec exactement ces champs :
 
 - "nom" : nom de famille
@@ -611,7 +611,7 @@ Texte du CV :
 {texte[:6000]}"""
 
         message = client.messages.create(
-            model="claude-sonnet-4-6",
+            model="claude-haiku-4-5-20251001",
             max_tokens=500,
             messages=[{"role": "user", "content": prompt}]
         )
@@ -648,7 +648,7 @@ def extraire_mots_cles_offre(competences_texte):
         if not api_key:
             return ""
 
-        client = anthropic_sdk.Anthropic(api_key=api_key)
+        client = anthropic_sdk.Anthropic(api_key=api_key, timeout=25.0)
         prompt = f"""Voici les compétences requises pour un poste, extraites d'une annonce de recrutement. Résume-les en une liste courte de mots-clés (5 à 8 maximum), chacun de 2 à 4 mots, sans phrase complète, sans numérotation, séparés uniquement par des virgules. Réponds UNIQUEMENT avec la liste, rien d'autre.
 
 Texte :
@@ -1110,7 +1110,7 @@ Si une section est absente, mets ""."""
             img_b64 = base64.standard_b64encode(buf.getvalue()).decode()
             content.append({"type": "image", "source": {"type": "base64", "media_type": "image/jpeg", "data": img_b64}})
 
-        client = anthropic_sdk.Anthropic(api_key=api_key)
+        client = anthropic_sdk.Anthropic(api_key=api_key, timeout=25.0)
         message = client.messages.create(
             model="claude-sonnet-4-6",
             max_tokens=2000,
@@ -1151,7 +1151,7 @@ def extraire_offre_ia(texte):
         if not api_key:
             return None
 
-        client = anthropic_sdk.Anthropic(api_key=api_key)
+        client = anthropic_sdk.Anthropic(api_key=api_key, timeout=25.0)
         prompt = f"""Voici le texte d'une annonce de recrutement. Analyse-le et réponds UNIQUEMENT avec un objet JSON valide (sans texte avant/après, sans balises markdown), avec exactement ces champs :
 
 - "titre" : titre complet du poste
