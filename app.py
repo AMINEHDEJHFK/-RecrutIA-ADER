@@ -447,7 +447,7 @@ def predire(poste, diplome, specialite, ecole, experience, promotion):
         anciennete,
     ]]
 
-    proba = RF_MODEL.predict_proba(features)[0][1]
+    proba = float(RF_MODEL.predict_proba(features)[0][1])
     if proba >= 0.55:
         decision = "Présélectionné"
     elif proba >= 0.45:
