@@ -79,6 +79,22 @@
     </div>
   </div>
 
+  <!-- Missions et compétences -->
+  {% if offre.missions or offre.competences %}
+  <div class="card mb-4">
+    <div class="card-body">
+      {% if offre.missions %}
+      <h6 class="fw-bold mb-2" style="color:var(--vert);"><i class="fas fa-tasks me-1"></i>Missions</h6>
+      <p style="white-space:pre-wrap;">{{ offre.missions }}</p>
+      {% endif %}
+      {% if offre.competences %}
+      <h6 class="fw-bold mb-2 mt-3" style="color:var(--vert);"><i class="fas fa-star me-1"></i>Compétences requises</h6>
+      <p style="white-space:pre-wrap;">{{ offre.competences }}</p>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+
   <!-- Classement candidats -->
   <div class="card">
     <div class="card-header-ader">
