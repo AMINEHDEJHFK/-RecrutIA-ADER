@@ -1113,11 +1113,14 @@ Si une section est absente, mets ""."""
         client = anthropic_sdk.Anthropic(api_key=api_key)
         message = client.messages.create(
             model="claude-sonnet-4-6",
-            max_tokens=800,
+            max_tokens=2000,
             messages=[{"role": "user", "content": content}]
         )
         reponse = message.content[0].text.strip()
         reponse = re.sub(r"^```(?:json)?|```$", "", reponse, flags=re.MULTILINE).strip()
+        match = re.search(r'\{.*\}', reponse, re.DOTALL)
+        if match:
+            reponse = match.group(0)
         data = json_module.loads(reponse)
         return {
             "titre":               str(data.get("titre", "")).strip(),
@@ -1171,11 +1174,15 @@ Texte de l'annonce :
 
         message = client.messages.create(
             model="claude-sonnet-4-6",
-            max_tokens=800,
+            max_tokens=2000,
             messages=[{"role": "user", "content": prompt}]
         )
         reponse = message.content[0].text.strip()
         reponse = re.sub(r"^```(?:json)?|```$", "", reponse, flags=re.MULTILINE).strip()
+        # Extraire uniquement le bloc JSON si du texte parasite entoure
+        match = re.search(r'\{.*\}', reponse, re.DOTALL)
+        if match:
+            reponse = match.group(0)
         data = json_module.loads(reponse)
 
         return {
