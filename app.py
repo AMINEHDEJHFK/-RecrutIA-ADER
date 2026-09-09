@@ -165,7 +165,9 @@ class Offre(db.Model):
     specialite      = db.Column(db.String(200))
     langues         = db.Column(db.String(200))
     missions        = db.Column(db.Text)
+    attributions    = db.Column(db.Text)
     competences     = db.Column(db.Text)
+    criteres_performance = db.Column(db.Text)
     mots_cles       = db.Column(db.String(500))
     date_limite     = db.Column(db.String(50))
     actif           = db.Column(db.Boolean, default=True)
@@ -1094,9 +1096,12 @@ def extraire_offre_ia_image(filepath):
 - "experience_min" : années d'expérience minimum (entier, 0 si non précisé)
 - "specialite" : spécialité ou domaine requis
 - "langues" : langues requises séparées par virgules
-- "missions" : description des missions (2-5 phrases)
-- "competences" : compétences requises
-- "date_limite" : date limite de candidature ("" si absente)"""
+- "missions" : section "Missions principales" complète
+- "attributions" : section "Principales attributions" complète
+- "competences" : section "Compétences requises" complète
+- "criteres_performance" : section "Critères de performance" complète
+- "date_limite" : date limite de candidature ("" si absente)
+Si une section est absente, mets ""."""
 
         content = [{"type": "text", "text": prompt_text}]
         for page in pages[:2]:
@@ -1115,16 +1120,18 @@ def extraire_offre_ia_image(filepath):
         reponse = re.sub(r"^```(?:json)?|```$", "", reponse, flags=re.MULTILINE).strip()
         data = json_module.loads(reponse)
         return {
-            "titre":          str(data.get("titre", "")).strip(),
-            "poste":          str(data.get("poste", "")).strip(),
-            "nombre_postes":  int(data.get("nombre_postes") or 1),
-            "diplome_requis": str(data.get("diplome_requis", "")).strip(),
-            "experience_min": int(data.get("experience_min") or 0),
-            "specialite":     str(data.get("specialite", "")).strip(),
-            "langues":        str(data.get("langues", "")).strip(),
-            "missions":       str(data.get("missions", "")).strip(),
-            "competences":    str(data.get("competences", "")).strip(),
-            "date_limite":    str(data.get("date_limite", "")).strip(),
+            "titre":               str(data.get("titre", "")).strip(),
+            "poste":               str(data.get("poste", "")).strip(),
+            "nombre_postes":       int(data.get("nombre_postes") or 1),
+            "diplome_requis":      str(data.get("diplome_requis", "")).strip(),
+            "experience_min":      int(data.get("experience_min") or 0),
+            "specialite":          str(data.get("specialite", "")).strip(),
+            "langues":             str(data.get("langues", "")).strip(),
+            "missions":            str(data.get("missions", "")).strip(),
+            "attributions":        str(data.get("attributions", "")).strip(),
+            "competences":         str(data.get("competences", "")).strip(),
+            "criteres_performance":str(data.get("criteres_performance", "")).strip(),
+            "date_limite":         str(data.get("date_limite", "")).strip(),
         }
     except Exception as e:
         print(f"Erreur extraction offre via Vision : {e}")
@@ -1144,18 +1151,20 @@ def extraire_offre_ia(texte):
         client = anthropic_sdk.Anthropic(api_key=api_key)
         prompt = f"""Voici le texte d'une annonce de recrutement. Analyse-le et réponds UNIQUEMENT avec un objet JSON valide (sans texte avant/après, sans balises markdown), avec exactement ces champs :
 
-- "titre" : titre complet du poste (ex: "Chef de projets Architecte")
+- "titre" : titre complet du poste
 - "poste" : type de poste court (ex: "Architecte", "Ingénieur civil")
 - "nombre_postes" : nombre de postes à pourvoir (entier, 1 si non précisé)
-- "diplome_requis" : diplôme demandé (ex: "Master", "Ingénieur", "Licence")
+- "diplome_requis" : diplôme demandé
 - "experience_min" : années d'expérience minimum requises (entier, 0 si non précisé)
-- "specialite" : spécialité ou domaine requis (ex: "Architecture", "Génie Civil")
-- "langues" : langues requises séparées par des virgules (ex: "Arabe, Français")
-- "missions" : description des missions du poste (texte libre, 2-5 phrases)
-- "competences" : compétences et qualifications requises (texte libre)
-- "date_limite" : date limite de dépôt des candidatures (texte tel qu'écrit dans l'annonce, "" si absent)
+- "specialite" : spécialité ou domaine requis
+- "langues" : langues requises séparées par des virgules
+- "missions" : section "Missions principales" de l'annonce (texte complet)
+- "attributions" : section "Principales attributions" de l'annonce (texte complet)
+- "competences" : section "Compétences requises" de l'annonce (texte complet)
+- "criteres_performance" : section "Critères de performance" de l'annonce (texte complet)
+- "date_limite" : date limite de dépôt des candidatures (texte tel qu'écrit, "" si absent)
 
-Si une information est absente, mets une chaîne vide "" (ou 0 pour les nombres entiers, 1 pour nombre_postes).
+Si une section est absente dans l'annonce, mets "". Pour les nombres entiers absents mets 0 (ou 1 pour nombre_postes).
 
 Texte de l'annonce :
 {texte[:6000]}"""
@@ -1170,16 +1179,18 @@ Texte de l'annonce :
         data = json_module.loads(reponse)
 
         return {
-            "titre":          str(data.get("titre", "")).strip(),
-            "poste":          str(data.get("poste", "")).strip(),
-            "nombre_postes":  int(data.get("nombre_postes") or 1),
-            "diplome_requis": str(data.get("diplome_requis", "")).strip(),
-            "experience_min": int(data.get("experience_min") or 0),
-            "specialite":     str(data.get("specialite", "")).strip(),
-            "langues":        str(data.get("langues", "")).strip(),
-            "missions":       str(data.get("missions", "")).strip(),
-            "competences":    str(data.get("competences", "")).strip(),
-            "date_limite":    str(data.get("date_limite", "")).strip(),
+            "titre":               str(data.get("titre", "")).strip(),
+            "poste":               str(data.get("poste", "")).strip(),
+            "nombre_postes":       int(data.get("nombre_postes") or 1),
+            "diplome_requis":      str(data.get("diplome_requis", "")).strip(),
+            "experience_min":      int(data.get("experience_min") or 0),
+            "specialite":          str(data.get("specialite", "")).strip(),
+            "langues":             str(data.get("langues", "")).strip(),
+            "missions":            str(data.get("missions", "")).strip(),
+            "attributions":        str(data.get("attributions", "")).strip(),
+            "competences":         str(data.get("competences", "")).strip(),
+            "criteres_performance":str(data.get("criteres_performance", "")).strip(),
+            "date_limite":         str(data.get("date_limite", "")).strip(),
         }
     except Exception as e:
         print(f"Erreur extraction offre via IA : {e}")
@@ -1291,7 +1302,9 @@ def creer_offre():
             specialite     = trunc(request.form.get("specialite", ""), 200),
             langues        = trunc(request.form.get("langues", ""), 200),
             missions       = request.form.get("missions", "").strip(),
+            attributions   = request.form.get("attributions", "").strip(),
             competences    = competences_saisies,
+            criteres_performance = request.form.get("criteres_performance", "").strip(),
             mots_cles      = trunc(extraire_mots_cles_offre(competences_saisies), 500),
             date_limite    = trunc(request.form.get("date_limite", ""), 50),
             actif          = True,

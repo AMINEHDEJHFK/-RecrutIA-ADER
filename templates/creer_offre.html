@@ -84,21 +84,31 @@
                        placeholder="Ex : 31 Décembre 2024"/>
               </div>
 
-              <!-- Missions -->
+              <!-- Missions & Compétences -->
               <div class="col-12 mt-2">
                 <h6 class="fw-bold" style="color:var(--vert);">
                   <i class="fas fa-tasks me-1"></i> Missions & Compétences
                 </h6>
               </div>
               <div class="col-12">
-                <label class="form-label fw-semibold" for="f_missions">Missions</label>
-                <textarea name="missions" id="f_missions" class="form-control" rows="5"
-                          placeholder="Décrivez les missions du poste..."></textarea>
+                <label class="form-label fw-semibold" for="f_missions">Missions principales</label>
+                <textarea name="missions" id="f_missions" class="form-control" rows="4"
+                          placeholder="Missions principales du poste..."></textarea>
+              </div>
+              <div class="col-12">
+                <label class="form-label fw-semibold" for="f_attributions">Principales attributions</label>
+                <textarea name="attributions" id="f_attributions" class="form-control" rows="4"
+                          placeholder="Principales attributions du poste..."></textarea>
               </div>
               <div class="col-12">
                 <label class="form-label fw-semibold" for="f_competences">Compétences requises</label>
                 <textarea name="competences" id="f_competences" class="form-control" rows="4"
-                          placeholder="Listez les compétences requises..."></textarea>
+                          placeholder="Compétences requises..."></textarea>
+              </div>
+              <div class="col-12">
+                <label class="form-label fw-semibold" for="f_criteres_performance">Critères de performance</label>
+                <textarea name="criteres_performance" id="f_criteres_performance" class="form-control" rows="4"
+                          placeholder="Critères de performance..."></textarea>
               </div>
 
               <div class="col-12 d-flex gap-3 mt-3 justify-content-end">
@@ -150,9 +160,11 @@ function handleFile(file) {
       if (data.experience_min) document.getElementById('f_experience_min').value = data.experience_min;
       if (data.specialite)     document.getElementById('f_specialite').value = data.specialite;
       if (data.langues)        document.getElementById('f_langues').value = data.langues;
-      if (data.missions)       document.getElementById('f_missions').value = data.missions;
-      if (data.competences)    document.getElementById('f_competences').value = data.competences;
-      if (data.date_limite)    document.getElementById('f_date_limite').value = data.date_limite;
+      if (data.missions)              document.getElementById('f_missions').value = data.missions;
+      if (data.attributions)          document.getElementById('f_attributions').value = data.attributions;
+      if (data.competences)           document.getElementById('f_competences').value = data.competences;
+      if (data.criteres_performance)  document.getElementById('f_criteres_performance').value = data.criteres_performance;
+      if (data.date_limite)           document.getElementById('f_date_limite').value = data.date_limite;
       zone.innerHTML += `<br><small class="text-success fw-bold"><i class="fas fa-magic me-1"></i>Informations extraites — vérifiez et complétez si nécessaire.</small>`;
     })
     .catch(() => {
