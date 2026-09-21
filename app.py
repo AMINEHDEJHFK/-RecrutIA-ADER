@@ -107,6 +107,9 @@ def charger_ou_entrainer_modele():
 
 RF_MODEL, ENCODERS = charger_ou_entrainer_modele()
 
+# ─── MODÈLE TF-IDF (matching candidat ↔ offre) ────────────────────────────────
+from models.tfidf_scorer import scorer_compatibilite, score_final_fusionne
+
 DIPLOME_NIVEAU = {
     "DOCTORAT": 5, "MASTER": 4, "LICENCE": 3,
     "TECHNICIEN SPECIALISE": 2, "TECHNICIEN": 1, "BAC": 0,
@@ -433,10 +436,34 @@ def encoder_safe(le, valeur):
     return 0
 
 
-def predire(poste, diplome, specialite, ecole, experience, promotion):
-    """Lance la prédiction ML et retourne (probabilité, décision)."""
+def predire(poste, diplome, specialite, ecole, experience, promotion, offre=None):
+    """Lance la prédiction ML et retourne (probabilité, décision).
+    Si offre fournie, vérifie la conformité avec les critères avant le score RF."""
     niveau = DIPLOME_NIVEAU.get(diplome.upper().strip(), 1)
     anciennete = datetime.now().year - int(promotion)
+
+    # ── Vérification conformité avec l'offre ──────────────────────────────────
+    if offre:
+        # 1. Diplôme minimum
+        niveau_requis = DIPLOME_NIVEAU.get(
+            str(offre.diplome_requis).upper().strip().split("(")[0].strip(), 1)
+        if niveau < niveau_requis:
+            return 0.05, "Non retenu"
+
+        # 2. Expérience minimum
+        if int(experience) < int(offre.experience_min or 0):
+            return 0.08, "Non retenu"
+
+        # 3. Spécialité compatible (si renseignée dans l'offre)
+        if offre.specialite:
+            mots_offre = set(offre.specialite.lower().replace(",", " ").split())
+            mots_candidat = set(specialite.lower().replace(",", " ").split())
+            mots_communs = {"de", "du", "des", "et", "en", "le", "la", "les", "l", "d"}
+            mots_offre -= mots_communs
+            mots_candidat -= mots_communs
+            if mots_offre and not mots_offre.intersection(mots_candidat):
+                # Spécialité incompatible → score pénalisé mais pas éliminé
+                pass  # on laisse le RF décider
 
     features = [[
         encoder_safe(ENCODERS["le_poste"], poste),
@@ -447,7 +474,24 @@ def predire(poste, diplome, specialite, ecole, experience, promotion):
         anciennete,
     ]]
 
-    proba = float(RF_MODEL.predict_proba(features)[0][1])
+    score_rf = float(RF_MODEL.predict_proba(features)[0][1])
+
+    # ── Score TF-IDF : compatibilité textuelle candidat ↔ offre ─────────────────
+    if offre:
+        candidat_dict = {
+            "poste":       poste,
+            "diplome":     diplome,
+            "specialite":  specialite,
+            "ecole":       ecole,
+            "experience":  experience,
+            "competences": "",
+            "langues":     "",
+        }
+        score_tfidf = scorer_compatibilite(offre, candidat_dict)
+        proba = score_final_fusionne(score_rf, score_tfidf, poids_rf=0.65)
+    else:
+        proba = score_rf
+
     if proba >= 0.40:
         decision = "Présélectionné"
     elif proba >= 0.28:
@@ -1386,7 +1430,7 @@ def importer_cvs(offre_id):
                 if doublon:
                     continue
 
-            proba, decision = predire(poste, diplome, specialite, ecole, experience, promotion)
+            proba, decision = predire(poste, diplome, specialite, ecole, experience, promotion, offre=offre)
 
             candidat = Candidat(
                 nom        = infos.get("nom") or "—",
