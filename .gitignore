@@ -1,6 +1,5 @@
 __pycache__/
 *.pyc
-*.pkl
 recrut.db
 static/uploads/
 static/cv_tests/
