@@ -11,4 +11,5 @@ shap
 anthropic
 python-dotenv
 psycopg2-binary
+psycopg[binary]
 pdf2image
