@@ -460,23 +460,28 @@ with app.app_context():
         db.session.commit()
 
     # ── Offre DEMO jury — Responsable Communication Institutionnelle ──────────
-    if not Offre.query.get(11):
-        db.session.add(Offre(
-            id=11,
-            titre="Responsable Communication Institutionnelle",
-            poste="Responsable Communication",
-            nombre_postes=1,
-            diplome_requis="Master en Communication, Sciences de l'Information ou Marketing",
-            experience_min=3,
-            specialite="Communication / Marketing",
-            langues="Français, Arabe",
-            missions="Elaboration de la strategie de communication de l'agence ; Gestion des relations presse et medias ; Production de contenus institutionnels ; Organisation des evenements officiels ; Pilotage des reseaux sociaux et du site web.",
-            competences="Maitrise des outils de communication digitale ; Redaction institutionnelle ; Gestion de projet ; Sens de l'esthetique et de la communication visuelle.",
-            mots_cles="communication,marketing,medias,institutionnel,evenement",
-            date_limite="31/10/2026",
-            actif=True
-        ))
-        db.session.commit()
+    # try/except : les 2 workers gunicorn démarrent en parallèle et peuvent tenter l'insertion en même temps
+    try:
+        if not db.session.get(Offre, 11):
+            db.session.add(Offre(
+                id=11,
+                titre="Responsable Communication Institutionnelle",
+                poste="Responsable Communication",
+                nombre_postes=1,
+                diplome_requis="Master en Communication, Sciences de l'Information ou Marketing",
+                experience_min=3,
+                specialite="Communication / Marketing",
+                langues="Français, Arabe",
+                missions="Elaboration de la strategie de communication de l'agence ; Gestion des relations presse et medias ; Production de contenus institutionnels ; Organisation des evenements officiels ; Pilotage des reseaux sociaux et du site web.",
+                competences="Maitrise des outils de communication digitale ; Redaction institutionnelle ; Gestion de projet ; Sens de l'esthetique et de la communication visuelle.",
+                mots_cles="communication,marketing,medias,institutionnel,evenement",
+                date_limite="31/10/2026",
+                actif=True
+            ))
+            db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        print(f"[INIT] Offre demo non créée : {e}")
 
 # ─── FONCTIONS UTILITAIRES ─────────────────────────────────────────────────────
 
