@@ -63,6 +63,10 @@ python models/train_model.py
 python models/train_nlp_model.py
 ```
 
+## Accès rapide sans identifiant
+
+Sur la page de connexion, le bouton **« Accès démo, sans identifiant »** ouvre directement l'application avec un profil RH de démonstration (tableau de bord, candidats, scores, explications SHAP, questions d'entretien). Il peut être désactivé avec `DEMO_MODE=0`.
+
 ## Identifiants de test
 
 | Rôle | Identifiant | Mot de passe | Accès |
@@ -79,7 +83,7 @@ Ces comptes sont créés automatiquement au premier démarrage. Leurs mots de pa
 
 ## Compatibilité navigateurs
 
-Interface construite avec Bootstrap 5, compatible avec les navigateurs récents : Google Chrome, Mozilla Firefox, Microsoft Edge et Safari.
+Interface construite avec Bootstrap 5. Application testée sur la version en ligne avec Google Chrome, Mozilla Firefox et Microsoft Edge (connexion, accès démo, tableau de bord, fiche candidat).
 
 ## Stack technique
 
