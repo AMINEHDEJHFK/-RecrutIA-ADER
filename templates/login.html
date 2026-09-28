@@ -107,7 +107,7 @@
     <div class="auth-brand-mid">
       <span class="auth-brand-badge">Espace réservé au personnel</span>
       <h1>Présélection intelligente,<br/>décision humaine.</h1>
-      <p>Plateforme interne de présélection des candidatures pour l'Agence de Développement Régional de Fès — scoring explicable, conforme au cadre du recrutement public marocain.</p>
+      <p>Plateforme interne de présélection des candidatures pour l'Agence pour le Développement et la Réhabilitation de la ville de Fès : scoring explicable, conforme au cadre du recrutement public marocain.</p>
     </div>
 
     <div class="auth-brand-stats">
@@ -154,6 +154,14 @@
           Se connecter <i class="fas fa-arrow-right"></i>
         </button>
       </form>
+
+      {% if demo_mode %}
+      <div class="text-center my-3 text-muted small">ou</div>
+      <a href="{{ url_for('demo') }}" class="btn btn-outline-success w-100 py-2 fw-semibold">
+        <i class="fas fa-eye me-1"></i> Accès démo, sans identifiant
+      </a>
+      <p class="text-muted small mt-2 mb-0 text-center">Consultation de l'application avec un profil RH de démonstration.</p>
+      {% endif %}
     </div>
   </div>
 

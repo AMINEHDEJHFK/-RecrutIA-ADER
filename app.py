@@ -459,6 +459,25 @@ with app.app_context():
             db.session.add(Candidat(**c))
         db.session.commit()
 
+    # ── Offre DEMO jury — Responsable Communication Institutionnelle ──────────
+    if not Offre.query.get(11):
+        db.session.add(Offre(
+            id=11,
+            titre="Responsable Communication Institutionnelle",
+            poste="Responsable Communication",
+            nombre_postes=1,
+            diplome_requis="Master en Communication, Sciences de l'Information ou Marketing",
+            experience_min=3,
+            specialite="Communication / Marketing",
+            langues="Français, Arabe",
+            missions="Elaboration de la strategie de communication de l'agence ; Gestion des relations presse et medias ; Production de contenus institutionnels ; Organisation des evenements officiels ; Pilotage des reseaux sociaux et du site web.",
+            competences="Maitrise des outils de communication digitale ; Redaction institutionnelle ; Gestion de projet ; Sens de l'esthetique et de la communication visuelle.",
+            mots_cles="communication,marketing,medias,institutionnel,evenement",
+            date_limite="31/10/2026",
+            actif=True
+        ))
+        db.session.commit()
+
 # ─── FONCTIONS UTILITAIRES ─────────────────────────────────────────────────────
 
 def allowed_file(filename):
@@ -529,9 +548,9 @@ def predire(poste, diplome, specialite, ecole, experience, promotion, offre=None
     else:
         proba = score_rf
 
-    if proba >= 0.40:
+    if proba >= 0.34:
         decision = "Présélectionné"
-    elif proba >= 0.28:
+    elif proba >= 0.24:
         decision = "À examiner"
     else:
         decision = "Non retenu"
@@ -953,7 +972,30 @@ def login():
             flash(f"Bienvenue, {user.prenom} {user.nom} !", "success")
             return redirect(url_for("dashboard"))
         flash("Identifiants incorrects ou compte désactivé.", "danger")
-    return render_template("login.html")
+    return render_template("login.html", demo_mode=DEMO_MODE)
+
+
+DEMO_MODE = os.environ.get("DEMO_MODE", "1") == "1"
+
+
+@app.route("/demo")
+def demo():
+    if not DEMO_MODE:
+        return redirect(url_for("login"))
+    user = UtilisateurRH.query.filter_by(username="demo").first()
+    if not user:
+        user = UtilisateurRH(nom="Démo", prenom="Jury", username="demo", role="rh")
+        user.set_password(secrets.token_urlsafe(24))
+        db.session.add(user)
+        db.session.commit()
+    session.clear()
+    session["rh_logged_in"] = True
+    session["user_id"]      = user.id
+    session["user_nom"]     = "Accès démo"
+    session["role"]         = "rh"
+    session["jury_numero"]  = None
+    flash("Vous êtes connecté en mode démonstration (profil RH).", "info")
+    return redirect(url_for("dashboard"))
 
 
 @app.route("/logout")
