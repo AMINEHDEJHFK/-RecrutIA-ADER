@@ -656,7 +656,7 @@ def generer_questions(candidat):
         if not api_key:
             return None
         client = anthropic_sdk.Anthropic(api_key=api_key, timeout=25.0)
-        prompt = f"""Tu es expert RH pour l'Agence de Développement Régional de Fès-Meknès (ADER).
+        prompt = f"""Tu es expert RH pour l'Agence pour le Développement et la Réhabilitation de la ville de Fès (ADER-Fès), établissement public chargé de la sauvegarde et de la réhabilitation de la médina de Fès.
 Génère 10 questions d'entretien personnalisées pour ce candidat.
 
 Poste visé : {candidat.poste}
@@ -2151,7 +2151,7 @@ def envoyer_email_non_conforme(candidat_id):
           <div style="padding:32px;">
             <p>Madame / Monsieur <strong>{candidat.prenom} {candidat.nom}</strong>,</p>
             <p>Nous avons bien reçu votre candidature pour le poste de <strong>{offre.titre if offre else 'le poste en question'}</strong>
-               et nous vous remercions de l'intérêt que vous portez à l'Agence de Développement Régional de Fès.</p>
+               et nous vous remercions de l'intérêt que vous portez à l'Agence pour le Développement et la Réhabilitation de la ville de Fès.</p>
             <p>Après examen approfondi de votre dossier et suite au processus de sélection,
                nous avons le regret de vous informer que votre candidature <strong>n'a pas été retenue</strong>
                pour la suite du processus de recrutement.</p>

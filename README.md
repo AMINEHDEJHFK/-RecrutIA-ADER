@@ -2,8 +2,10 @@
 
 Application web de présélection des candidats par intelligence artificielle explicable, développée pour l'ADER-Fès (Agence pour le Développement et la Réhabilitation de la ville de Fès) dans le cadre de ma thèse professionnelle (Mastère Data & IA).
 
-- **URL publique :** https://web-production-ae396c.up.railway.app
+- **URL publique (provisoire) :** https://web-production-ae396c.up.railway.app
 - **Dépôt Git :** https://github.com/AMINEHDEJHFK/-RecrutIA-ADER
+
+> Ce lien est un déploiement provisoire, mis en place uniquement pour le rendu du projet et la consultation par le jury. En production réelle, c'est l'ADER-Fès qui se charge du déploiement de l'application sur son propre serveur local, afin que les données des candidats restent dans l'agence.
 
 ## Fonctionnalités
 
