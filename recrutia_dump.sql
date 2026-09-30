@@ -1,4 +1,5 @@
 -- RecrutIA ADER : export complet (structure + données de test), base SQLite recrut.db
+-- Toutes les données sont fictives (candidats et évaluations de test).
 -- Import : sqlite3 recrut.db < recrutia_dump.sql
 BEGIN TRANSACTION;
 CREATE TABLE candidat (

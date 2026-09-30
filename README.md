@@ -7,6 +7,8 @@ Application web de présélection des candidats par intelligence artificielle ex
 
 > Ce lien est un déploiement provisoire, mis en place uniquement pour le rendu du projet et la consultation par le jury. En production réelle, c'est l'ADER-Fès qui se charge du déploiement de l'application sur son propre serveur local, afin que les données des candidats restent dans l'agence.
 
+> **Données fictives :** toutes les données présentes dans l'application (candidats, CV, offres de démonstration, évaluations des jurys) sont fictives. Elles ont été créées uniquement pour tester l'application. Aucune donnée réelle de candidat n'est stockée dans la version en ligne.
+
 ## Fonctionnalités
 
 - Import des CV (PDF) par le service RH et extraction automatique des informations
