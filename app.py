@@ -2280,6 +2280,7 @@ def questions_entretien(candidat_id):
 
 
 @app.route("/debug-shap/<int:candidat_id>")
+@admin_required
 def debug_shap(candidat_id):
     import traceback
     candidat = Candidat.query.get_or_404(candidat_id)
@@ -2291,6 +2292,7 @@ def debug_shap(candidat_id):
 
 
 @app.route("/init-db-secret-ader2024")
+@admin_required
 def init_db_route():
     try:
         db.create_all()
