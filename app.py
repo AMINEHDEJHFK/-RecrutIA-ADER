@@ -20,7 +20,8 @@ from datetime import datetime, timedelta
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
 app = Flask(__name__)
-app.secret_key = "ader_recrut_ia_2024"
+# Clé de signature des sessions : à définir dans les variables d'environnement (SECRET_KEY)
+app.secret_key = os.environ.get("SECRET_KEY") or "cle-de-developpement-local"
 
 def login_required(f):
     @wraps(f)
@@ -443,14 +444,14 @@ with app.app_context():
 
     if not Candidat.query.get(41):
         candidats_demo = [
-            # ✅ PRESELECTIONNES (score >= 0.40)
+            # Candidats de démonstration : profils présélectionnés
             dict(id=41, nom="BENALI",    prenom="Hafsa",   email="hafsa.benali@gmail.com",   telephone="0661100001", poste="Chargé de Développement Économique", diplome="MASTER",              specialite="Économie et Gestion Territoriale",  ecole="ENCG Fès",      promotion=2021, experience=4, score_ia=0.84, decision="Présélectionné", decision_manuelle=False, offre_id=10),
             dict(id=42, nom="ERRACHIDI", prenom="Kamal",   email="kamal.errachidi@gmail.com", telephone="0662200002", poste="Chargé de Développement Économique", diplome="MASTER",              specialite="Management des Organisations",       ecole="USMBA Fès",     promotion=2020, experience=5, score_ia=0.76, decision="Présélectionné", decision_manuelle=False, offre_id=10),
             dict(id=43, nom="ALAMI",     prenom="Sanaa",   email="sanaa.alami@gmail.com",     telephone="0663300003", poste="Chargé de Développement Économique", diplome="MASTER",              specialite="Développement Local et Gouvernance", ecole="FSJES Fès",     promotion=2022, experience=3, score_ia=0.68, decision="Présélectionné", decision_manuelle=False, offre_id=10),
-            # ⚠️ A EXAMINER (score 0.28-0.39)
+            # Candidats de démonstration : profils à examiner
             dict(id=44, nom="OUALI",     prenom="Yassine", email="yassine.ouali@gmail.com",   telephone="0664400004", poste="Chargé de Développement Économique", diplome="LICENCE",             specialite="Économie Appliquée",                 ecole="FSJES Meknès",  promotion=2023, experience=1, score_ia=0.36, decision="À examiner",     decision_manuelle=False, offre_id=10),
             dict(id=45, nom="TAHIRI",    prenom="Nadia",   email="nadia.tahiri@gmail.com",    telephone="0665500005", poste="Chargé de Développement Économique", diplome="MASTER",              specialite="Finance et Commerce International",   ecole="Autre",         promotion=2019, experience=3, score_ia=0.31, decision="À examiner",     decision_manuelle=False, offre_id=10),
-            # ❌ NON RETENUS (score < 0.28)
+            # Candidats de démonstration : profils non retenus
             dict(id=46, nom="GUENOUN",   prenom="Amine",   email="amine.guenoun@gmail.com",   telephone="0666600006", poste="Chargé de Développement Économique", diplome="LICENCE",             specialite="Géographie et Aménagement",          ecole="FSJES Fès",     promotion=2024, experience=0, score_ia=0.22, decision="Non retenu",     decision_manuelle=False, offre_id=10),
             dict(id=47, nom="LAHLOU",    prenom="Zineb",   email="zineb.lahlou@gmail.com",    telephone="0667700007", poste="Chargé de Développement Économique", diplome="BAC",                 specialite="Sciences Économiques",               ecole="Lycée Moulay Idriss", promotion=2023, experience=0, score_ia=0.14, decision="Non retenu",     decision_manuelle=False, offre_id=10),
             dict(id=48, nom="BENSAID",   prenom="Omar",    email="omar.bensaid@gmail.com",    telephone="0668800008", poste="Chargé de Développement Économique", diplome="TECHNICIEN SPECIALISE", specialite="Commerce et Vente",                ecole="ISTA Fès",      promotion=2022, experience=1, score_ia=0.09, decision="Non retenu",     decision_manuelle=False, offre_id=10),
@@ -939,6 +940,7 @@ def candidature():
 # ── Upload CV → extraction automatique ────────────────────────────────────────
 
 @app.route("/extraire_cv", methods=["POST"])
+@login_required
 def extraire_cv_route():
     if "cv" not in request.files:
         return jsonify({"error": "Pas de fichier"}), 400

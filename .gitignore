@@ -8,3 +8,9 @@ data/cvs_test_email/
 .env
 venv/
 flask_out.txt
+sql_*.sql
+gen_*.py
+show_data.py
+export_to_postgres.py
+dump_recrutia.sql
+.claude/
