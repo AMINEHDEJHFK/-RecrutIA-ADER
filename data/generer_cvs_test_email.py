@@ -119,7 +119,7 @@ def faire_cv(c):
 
     story = []
 
-    # ── EN-TÊTE ─────────────────────────────────────────────────
+    # EN-TÊTE
     entete = Table([
         [
             Paragraph(f"{c['prenom']} {c['nom']}", s_nom),
@@ -138,7 +138,7 @@ def faire_cv(c):
     story.append(Paragraph(c["poste"], s_poste))
     story.append(HRFlowable(width="100%", thickness=2, color=VERT, spaceAfter=8))
 
-    # ── INFOS CLÉS ───────────────────────────────────────────────
+    # INFOS CLÉS
     story.append(Paragraph("INFORMATIONS CLÉS", s_h2))
     infos_table = Table([
         ["Diplôme :",    c["diplome"],    "Expérience :", c["experience"]],
@@ -157,7 +157,7 @@ def faire_cv(c):
     ]))
     story.append(infos_table)
 
-    # ── EXPÉRIENCES ──────────────────────────────────────────────
+    # EXPÉRIENCES
     story.append(Paragraph("EXPÉRIENCES PROFESSIONNELLES", s_h2))
     story.append(HRFlowable(width="100%", thickness=0.5, color=VERT, spaceAfter=6))
     for (periode, titre, lieu, desc) in c["experiences"]:
@@ -173,19 +173,19 @@ def faire_cv(c):
         story.append(exp_tbl)
         story.append(Spacer(1, 0.2*cm))
 
-    # ── MISSIONS ─────────────────────────────────────────────────
+    # MISSIONS
     story.append(Paragraph("MISSIONS CLÉS", s_h2))
     story.append(HRFlowable(width="100%", thickness=0.5, color=VERT, spaceAfter=6))
     for m in c["missions"]:
         story.append(Paragraph(f"• {m}", s_body))
 
-    # ── FORMATION ────────────────────────────────────────────────
+    # FORMATION
     story.append(Paragraph("FORMATION", s_h2))
     story.append(HRFlowable(width="100%", thickness=0.5, color=VERT, spaceAfter=6))
     for (periode, diplome, ecole) in c["formations"]:
         story.append(Paragraph(f"<b>{periode}</b> — {diplome} | <i>{ecole}</i>", s_body))
 
-    # ── COMPÉTENCES ──────────────────────────────────────────────
+    # COMPÉTENCES
     story.append(Paragraph("COMPÉTENCES", s_h2))
     story.append(HRFlowable(width="100%", thickness=0.5, color=VERT, spaceAfter=6))
     comp_data = [[Paragraph(f"✓ {comp}", s_body) for comp in c["competences"]]]

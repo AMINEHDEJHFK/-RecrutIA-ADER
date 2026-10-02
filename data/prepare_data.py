@@ -9,7 +9,7 @@ import pandas as pd
 import numpy as np
 import os
 
-# ─── 1. DONNÉES RÉELLES ────────────────────────────────────────────────────────
+# 1. DONNÉES RÉELLES
 
 real_data = [
     # Chargé Gestion des Marchés (CGM) — 7 candidats, 4 convoqués
@@ -91,7 +91,7 @@ real_data = [
 
 df_real = pd.DataFrame(real_data)
 
-# ─── 2. DONNÉES SYNTHÉTIQUES ──────────────────────────────────────────────────
+# 2. DONNÉES SYNTHÉTIQUES
 
 np.random.seed(42)
 
@@ -200,7 +200,7 @@ for _ in range(600):
 
 df_synthetic = pd.DataFrame(synthetic_rows)
 
-# ─── 3. FUSION ET SAUVEGARDE ──────────────────────────────────────────────────
+# 3. FUSION ET SAUVEGARDE
 
 df_final = pd.concat([df_real, df_synthetic], ignore_index=True)
 df_final["source"] = ["reel"] * len(df_real) + ["synthetique"] * len(df_synthetic)

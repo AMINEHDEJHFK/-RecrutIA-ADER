@@ -58,9 +58,7 @@ def sous_titre(c, x, y, poste, dates, lieu):
     c.drawString(x, y - 14, f"{lieu}  |  {dates}")
     return y - 30
 
-# ═══════════════════════════════════════════════════════
 # CV 1 — Bon profil CGM (devrait être PRÉSÉLECTIONNÉ)
-# ═══════════════════════════════════════════════════════
 c = canvas.Canvas(os.path.join(OUT, "CV_ALAMI_Youssef_CGM.pdf"), pagesize=A4)
 
 entete(c, "ALAMI Youssef", "Candidat - Chargé de Gestion des Marchés",
@@ -93,9 +91,7 @@ y = bullet_item(c, 55, y, "Anglais : Intermédiaire (B1)")
 c.save()
 print("CV 1 cree : ALAMI Youssef (CGM - bon profil)")
 
-# ═══════════════════════════════════════════════════════
 # CV 2 — Bon profil SI (devrait être PRÉSÉLECTIONNÉ)
-# ═══════════════════════════════════════════════════════
 c = canvas.Canvas(os.path.join(OUT, "CV_BENALI_Sara_SI.pdf"), pagesize=A4)
 
 entete(c, "BENALI Sara", "Candidat - Cadre Système d'Information",
@@ -132,9 +128,7 @@ y = bullet_item(c, 55, y, "Anglais : Avancé (B2)")
 c.save()
 print("CV 2 cree : BENALI Sara (SI - bon profil)")
 
-# ═══════════════════════════════════════════════════════
 # CV 3 — Profil Archiviste (profil moyen)
-# ═══════════════════════════════════════════════════════
 c = canvas.Canvas(os.path.join(OUT, "CV_IDRISSI_Karim_Archiviste.pdf"), pagesize=A4)
 
 entete(c, "IDRISSI Karim", "Candidat - Aide Archiviste",

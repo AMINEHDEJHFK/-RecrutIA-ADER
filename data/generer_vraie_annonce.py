@@ -17,7 +17,7 @@ OUT  = os.path.join(BASE, "static", "annonces", "Annonce_ADER_Communication_Mark
 
 c = canvas.Canvas(OUT, pagesize=A4)
 
-# ── En-tête avec logo ────────────────────────────────────────────
+# En-tête avec logo
 # Fond blanc en-tête
 c.setFillColorRGB(1, 1, 1)
 c.rect(0, H - 100, W, 100, fill=1, stroke=0)
@@ -44,7 +44,7 @@ c.drawRightString(W - 30, H - 48, "Immeuble 21, Rue Mohammed Diouri")
 c.drawRightString(W - 30, H - 59, "30000 (VN) - Fes")
 c.drawRightString(W - 30, H - 70, "www.ader-fes.ma")
 
-# ── Bandeau titre poste ──────────────────────────────────────────
+# Bandeau titre poste
 c.setFillColorRGB(*BLEU)
 c.rect(0, H - 140, W, 34, fill=1, stroke=0)
 c.setFillColorRGB(1, 1, 1)
@@ -57,7 +57,7 @@ c.setFillColorRGB(*BLEU)
 c.setFont("Helvetica-Oblique", 9)
 c.drawCentredString(W/2, H - 153, "Au sein de l'ADER - Fes  |  Sis a : Immeuble 21, Rue Mohammed Diouri, 30000 (VN) - Fes")
 
-# ── Contenu ──────────────────────────────────────────────────────
+# Contenu
 y = H - 185
 
 def section(c, y, titre):
@@ -172,7 +172,7 @@ c.setFillColorRGB(*BLEU)
 c.setFont("Helvetica-Bold", 10)
 c.drawString(42, y + 1, "Le dernier delai de candidature est fixe au :  28 Fevrier 2025")
 
-# ── Pied de page ─────────────────────────────────────────────────
+# Pied de page
 c.setFillColorRGB(*BLEU)
 c.rect(0, 0, W, 40, fill=1, stroke=0)
 c.setFillColorRGB(*OR)

@@ -15,7 +15,7 @@ from sklearn.preprocessing import LabelEncoder
 from sklearn.metrics import (accuracy_score, classification_report,
                              confusion_matrix)
 
-# ─── 1. CHARGEMENT DES DONNÉES ────────────────────────────────────────────────
+# 1. CHARGEMENT DES DONNÉES
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 data_path = os.path.join(BASE_DIR, "data", "candidats.csv")
@@ -23,7 +23,7 @@ df = pd.read_csv(data_path, encoding="utf-8-sig")
 
 print(f"Dataset : {df.shape[0]} lignes, {df.shape[1]} colonnes")
 
-# ─── 2. FEATURE ENGINEERING ───────────────────────────────────────────────────
+# 2. FEATURE ENGINEERING
 
 # Niveau de diplôme en valeur numérique
 diplome_niveau = {
@@ -64,14 +64,14 @@ FEATURES = [
 X = df[FEATURES]
 y = df["selectionne"]
 
-# ─── 3. SPLIT TRAIN / TEST (80% / 20%) ────────────────────────────────────────
+# 3. SPLIT TRAIN / TEST (80% / 20%)
 
 X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size=0.2, random_state=42, stratify=y
 )
 print(f"Train : {len(X_train)} | Test : {len(X_test)}")
 
-# ─── 4. ENTRAÎNEMENT RANDOM FOREST ────────────────────────────────────────────
+# 4. ENTRAÎNEMENT RANDOM FOREST
 
 rf_model = RandomForestClassifier(
     n_estimators=200,
@@ -82,7 +82,7 @@ rf_model = RandomForestClassifier(
 )
 rf_model.fit(X_train, y_train)
 
-# ─── 5. ÉVALUATION ────────────────────────────────────────────────────────────
+# 5. ÉVALUATION
 
 y_pred = rf_model.predict(X_test)
 acc = accuracy_score(y_test, y_pred)
@@ -100,7 +100,7 @@ for feat, imp in sorted(zip(FEATURES, rf_model.feature_importances_),
                          key=lambda x: -x[1]):
     print(f"  {feat:<30} {imp:.3f}")
 
-# ─── 6. SAUVEGARDE DU MODÈLE ET ENCODEURS ─────────────────────────────────────
+# 6. SAUVEGARDE DU MODÈLE ET ENCODEURS
 
 models_dir = os.path.dirname(os.path.abspath(__file__))
 

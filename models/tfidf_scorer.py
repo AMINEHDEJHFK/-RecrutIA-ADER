@@ -1,5 +1,5 @@
 """
-Scoring NLP de compatibilité candidat ↔ offre.
+Scoring NLP de compatibilité candidat / offre.
 Modèle : TF-IDF + Logistic Regression (entraîné sur 635 candidats ADER).
 Aucune API externe — fonctionne entièrement en local.
 """
@@ -11,7 +11,7 @@ import re
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
-# ─── Chargement du modèle NLP entraîné ───────────────────────────────────────
+# Chargement du modèle NLP entraîné
 
 _BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 _NLP_MODEL_PATH = os.path.join(_BASE_DIR, "nlp_model.pkl")
@@ -29,7 +29,7 @@ def _charger_nlp_model():
             _NLP_MODEL = pickle.load(f)
         return _NLP_MODEL
 
-    # ── Entraînement automatique (ex: premier démarrage sur Railway) ──────────
+    # Entraînement automatique (ex: premier démarrage sur Railway)
     try:
         import pandas as pd
         from sklearn.pipeline import Pipeline
@@ -75,7 +75,7 @@ def _charger_nlp_model():
     return _NLP_MODEL
 
 
-# ─── Utilitaires texte ────────────────────────────────────────────────────────
+# Utilitaires texte
 
 def _nettoyer(texte: str) -> str:
     """Minuscules, sans accents, sans ponctuation inutile."""
@@ -116,7 +116,7 @@ def _texte_offre(offre) -> str:
     return _nettoyer(" ".join(p for p in parties if p))
 
 
-# ─── Scoring principal ────────────────────────────────────────────────────────
+# Scoring principal
 
 def scorer_compatibilite(offre, candidat_dict: dict) -> float:
     """
@@ -137,7 +137,7 @@ def scorer_compatibilite(offre, candidat_dict: dict) -> float:
 
     model = _charger_nlp_model()
 
-    # ── Score NLP (modèle entraîné sur 635 candidats) ──────────────────────────
+    # Score NLP (modèle entraîné sur 635 candidats)
     if model is not None:
         try:
             score_nlp = float(model.predict_proba([texte_c])[0][1])
@@ -146,7 +146,7 @@ def scorer_compatibilite(offre, candidat_dict: dict) -> float:
     else:
         score_nlp = 0.5
 
-    # ── Ajustement par similarité cosinus offre ↔ candidat ────────────────────
+    # Ajustement par similarité cosinus offre / candidat
     if texte_o:
         try:
             vectorizer = TfidfVectorizer(ngram_range=(1, 2), min_df=1, sublinear_tf=True)
@@ -170,7 +170,7 @@ def score_final_fusionne(score_rf: float, score_tfidf: float,
     Fusionne le score Random Forest (critères structurés) et
     le score NLP (compatibilité textuelle avec l'offre).
 
-    poids_rf = 0.65 → RF pèse 65%, NLP 35%
+    poids_rf = 0.65 -> RF pèse 65%, NLP 35%
     """
     poids_tfidf = 1.0 - poids_rf
     return round(poids_rf * score_rf + poids_tfidf * score_tfidf, 4)

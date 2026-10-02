@@ -1,5 +1,5 @@
 """
-Entraînement du modèle NLP de compatibilité candidat ↔ offre.
+Entraînement du modèle NLP de compatibilité candidat / offre.
 Algorithme : TF-IDF + Logistic Regression (classification supervisée)
 Variable cible : selectionne (0 = non retenu, 1 = présélectionné)
 
@@ -16,7 +16,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, classification_report
 from sklearn.pipeline import Pipeline
 
-# ─── 1. CHARGEMENT DES DONNÉES ────────────────────────────────────────────────
+# 1. CHARGEMENT DES DONNÉES
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 data_path = os.path.join(BASE_DIR, "data", "candidats.csv")
@@ -25,7 +25,7 @@ df = pd.read_csv(data_path, encoding="utf-8-sig")
 print(f"Dataset : {df.shape[0]} candidats")
 print(f"Sélectionnés : {df['selectionne'].sum()} | Non retenus : {(df['selectionne']==0).sum()}")
 
-# ─── 2. CONSTRUCTION DU TEXTE REPRÉSENTATIF DE CHAQUE CANDIDAT ───────────────
+# 2. CONSTRUCTION DU TEXTE REPRÉSENTATIF DE CHAQUE CANDIDAT
 # On concatène les champs textuels pour créer un "document" par candidat
 # Ex: "CGM MASTER Finances controle audit USMBA 3 ans"
 
@@ -42,19 +42,19 @@ def construire_texte_candidat(row):
 df["texte"] = df.apply(construire_texte_candidat, axis=1)
 
 print("\nExemple de texte généré :")
-print(f"  → {df['texte'].iloc[0]}")
+print(f"  -> {df['texte'].iloc[0]}")
 
 X = df["texte"]
 y = df["selectionne"]
 
-# ─── 3. SPLIT TRAIN / TEST (80% / 20%) ────────────────────────────────────────
+# 3. SPLIT TRAIN / TEST (80% / 20%)
 
 X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size=0.2, random_state=42, stratify=y
 )
 print(f"\nTrain : {len(X_train)} | Test : {len(X_test)}")
 
-# ─── 4. PIPELINE TF-IDF + LOGISTIC REGRESSION ────────────────────────────────
+# 4. PIPELINE TF-IDF + LOGISTIC REGRESSION
 # Pipeline = TF-IDF vectorise le texte, puis Logistic Regression classifie
 
 nlp_pipeline = Pipeline([
@@ -74,7 +74,7 @@ nlp_pipeline = Pipeline([
 
 nlp_pipeline.fit(X_train, y_train)
 
-# ─── 5. ÉVALUATION ────────────────────────────────────────────────────────────
+# 5. ÉVALUATION
 
 y_pred = nlp_pipeline.predict(X_test)
 acc = accuracy_score(y_test, y_pred)
@@ -84,7 +84,7 @@ print("\nClassification Report :")
 print(classification_report(y_test, y_pred,
                             target_names=["Non sélectionné", "Sélectionné"]))
 
-# ─── 6. SAUVEGARDE ────────────────────────────────────────────────────────────
+# 6. SAUVEGARDE
 
 models_dir = os.path.dirname(os.path.abspath(__file__))
 model_path = os.path.join(models_dir, "nlp_model.pkl")

@@ -15,7 +15,7 @@ from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, timedelta
 
-# ─── CONFIGURATION ─────────────────────────────────────────────────────────────
+# CONFIGURATION
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
@@ -55,7 +55,7 @@ db = SQLAlchemy(app)
 
 ALLOWED_EXTENSIONS = {"pdf"}
 
-# ─── MODÈLE ML ─────────────────────────────────────────────────────────────────
+# MODÈLE ML
 
 def charger_ou_entrainer_modele():
     model_path   = os.path.join(BASE_DIR, "models", "rf_model.pkl")
@@ -108,7 +108,7 @@ def charger_ou_entrainer_modele():
 
 RF_MODEL, ENCODERS = charger_ou_entrainer_modele()
 
-# ─── MODÈLE TF-IDF (matching candidat ↔ offre) ────────────────────────────────
+# MODÈLE TF-IDF (matching candidat / offre)
 from models.tfidf_scorer import scorer_compatibilite, score_final_fusionne
 
 DIPLOME_NIVEAU = {
@@ -119,7 +119,7 @@ DIPLOME_NIVEAU = {
 POSTES = ["CGM", "ARCHIVISTE", "SI"]
 DIPLOMES = ["MASTER", "LICENCE", "TECHNICIEN SPECIALISE", "TECHNICIEN", "DOCTORAT", "BAC"]
 
-# ─── BASE DE DONNÉES ───────────────────────────────────────────────────────────
+# BASE DE DONNÉES
 
 class Candidat(db.Model):
     id           = db.Column(db.Integer, primary_key=True)
@@ -301,7 +301,7 @@ with app.app_context():
             db.session.add(u)
     db.session.commit()
 
-    # ── Seed données de test (offres + candidats + évaluations) ──────────────
+    # Seed données de test (offres + candidats + évaluations)
     if Offre.query.count() == 0:
         offres_data = [
             dict(id=1, titre="(01) Chef de projets Architecte", poste="(01) Chef de projets Architecte", nombre_postes=1, diplome_requis="Architecte (Diplôme d'état Marocain ou diplôme privé reconnu par l'Etat ou diplôme étranger", experience_min=1, specialite="Architecture", langues="Français, Arabe", missions="Suivi et coordination des projets d'aménagement et de réhabilitation ; Préparation et lecture des plans ; Classement de dossiers ; Archivage des dossiers techniques.", competences="Maîtrise AutoCAD ; Connaissance normes construction ; Lecture plans architecturaux ; Suivi chantier.", mots_cles="architecte,projet,chantier,autocad", date_limite="30/09/2026", actif=True),
@@ -353,7 +353,7 @@ with app.app_context():
             db.session.add(EvaluationJury(**e))
         db.session.commit()
 
-    # ── Seed supplémentaire : 5 nouvelles offres + 20 nouveaux candidats ─────
+    # Seed supplémentaire : 5 nouvelles offres + 20 nouveaux candidats
     if not Offre.query.get(5):
         nouvelles_offres = [
             dict(id=5, titre="Responsable Comptabilité et Finance", poste="Responsable Comptabilité", nombre_postes=1,
@@ -423,7 +423,7 @@ with app.app_context():
             db.session.add(Candidat(**c))
         db.session.commit()
 
-    # ── Offre DEMO soutenance — Chargé de Développement Économique ────────────
+    # Offre DEMO soutenance — Chargé de Développement Économique
     if not Offre.query.get(10):
         db.session.add(Offre(
             id=10,
@@ -460,7 +460,7 @@ with app.app_context():
             db.session.add(Candidat(**c))
         db.session.commit()
 
-    # ── Offre DEMO jury — Responsable Communication Institutionnelle ──────────
+    # Offre DEMO jury — Responsable Communication Institutionnelle
     # try/except : les 2 workers gunicorn démarrent en parallèle et peuvent tenter l'insertion en même temps
     try:
         if not db.session.get(Offre, 11):
@@ -484,7 +484,7 @@ with app.app_context():
         db.session.rollback()
         print(f"[INIT] Offre demo non créée : {e}")
 
-# ─── FONCTIONS UTILITAIRES ─────────────────────────────────────────────────────
+# FONCTIONS UTILITAIRES
 
 def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -504,7 +504,7 @@ def predire(poste, diplome, specialite, ecole, experience, promotion, offre=None
     niveau = DIPLOME_NIVEAU.get(diplome.upper().strip(), 1)
     anciennete = datetime.now().year - int(promotion)
 
-    # ── Vérification conformité avec l'offre ──────────────────────────────────
+    # Vérification conformité avec l'offre
     if offre:
         # 1. Diplôme minimum
         niveau_requis = DIPLOME_NIVEAU.get(
@@ -524,7 +524,7 @@ def predire(poste, diplome, specialite, ecole, experience, promotion, offre=None
             mots_offre -= mots_communs
             mots_candidat -= mots_communs
             if mots_offre and not mots_offre.intersection(mots_candidat):
-                # Spécialité incompatible → score pénalisé mais pas éliminé
+                # Spécialité incompatible -> score pénalisé mais pas éliminé
                 pass  # on laisse le RF décider
 
     features = [[
@@ -538,7 +538,7 @@ def predire(poste, diplome, specialite, ecole, experience, promotion, offre=None
 
     score_rf = float(RF_MODEL.predict_proba(features)[0][1])
 
-    # ── Score TF-IDF : compatibilité textuelle candidat ↔ offre ─────────────────
+    # Score TF-IDF : compatibilité textuelle candidat / offre
     if offre:
         candidat_dict = {
             "poste":       poste,
@@ -791,19 +791,19 @@ def extraire_cv(filepath):
 
         lignes = [l.strip() for l in texte.split("\n") if l.strip()]
 
-        # ── Nom / Prénom : première ligne non vide ──────────────────────────
+        # Nom / Prénom : première ligne non vide
         if lignes:
             mots = lignes[0].split()
             if len(mots) >= 2:
                 infos["prenom"] = mots[0].capitalize()
                 infos["nom"] = " ".join(mots[1:]).upper()
 
-        # ── Email ────────────────────────────────────────────────────────────
+        # Email
         m = re.search(r"[\w.+-]+@[\w-]+\.[a-zA-Z]{2,}", texte)
         if m:
             infos["email"] = m.group()
 
-        # ── Téléphone (France +33 ou Maroc +212 ou 06/07) ───────────────────
+        # Téléphone (France +33 ou Maroc +212 ou 06/07)
         m = re.search(
             r"(?:\+33|0033|0)[1-9](?:[\s.\-]?\d{2}){4}"
             r"|(?:\+212|0212|0)[5-7]\d{8}",
@@ -812,7 +812,7 @@ def extraire_cv(filepath):
         if m:
             infos["telephone"] = re.sub(r"[\s.\-]", "", m.group())
 
-        # ── Diplôme ──────────────────────────────────────────────────────────
+        # Diplôme
         diplome_map = {
             "doctorat": "DOCTORAT", "phd": "DOCTORAT", "ph.d": "DOCTORAT", "doctorate": "DOCTORAT",
             "master 2": "MASTER", "master2": "MASTER", "mater 2": "MASTER",
@@ -838,7 +838,7 @@ def extraire_cv(filepath):
                 infos["diplome"] = valeur
                 break
 
-        # ── Spécialité : mots-clés domaines ─────────────────────────────────
+        # Spécialité : mots-clés domaines
         specialites_map = {
             "intelligence artificielle": "Intelligence Artificielle",
             "data science": "Data Science",
@@ -859,7 +859,7 @@ def extraire_cv(filepath):
                 infos["specialite"] = valeur
                 break
 
-        # ── École ────────────────────────────────────────────────────────────
+        # École
         ecoles_map = {
             "nexa": "NEXA Digital School",
             "encg": "ENCG", "usmba": "USMBA", "ensa": "ENSA",
@@ -873,7 +873,7 @@ def extraire_cv(filepath):
                 infos["ecole"] = valeur
                 break
 
-        # ── Promotion (année du diplôme) ──────────────────────────────────────
+        # Promotion (année du diplôme)
         # Priorité : une année juste à côté d'un mot lié au diplôme (fiable),
         # sinon repli sur la dernière année mentionnée dans tout le texte (moins fiable,
         # car ça peut confondre avec une date d'expérience professionnelle récente).
@@ -888,7 +888,7 @@ def extraire_cv(filepath):
             if annees:
                 infos["promotion"] = int(sorted(annees)[-1])
 
-        # ── Expérience totale : calcul depuis les dates d'emploi ─────────────
+        # Expérience totale : calcul depuis les dates d'emploi
         # Cherche patterns "Mois AAAA - Mois AAAA" ou "AAAA - AAAA"
         periodes = re.findall(
             r"(\d{4})\s*[-–à]\s*(?:(?:janvier|février|mars|avril|mai|juin|"
@@ -918,7 +918,7 @@ def extraire_cv(filepath):
 
     return infos
 
-# ─── ROUTES ────────────────────────────────────────────────────────────────────
+# ROUTES
 
 @app.route("/")
 def index():
@@ -929,7 +929,7 @@ def index():
     return render_template("index.html", nb_candidatures=nb_candidatures, nb_postes=nb_postes)
 
 
-# ── Candidat : dépôt de candidature ──────────────────────────────────────────
+# Candidat : dépôt de candidature
 
 @app.route("/candidature")
 def candidature():
@@ -937,7 +937,7 @@ def candidature():
     return redirect(url_for("index"))
 
 
-# ── Upload CV → extraction automatique ────────────────────────────────────────
+# Upload CV -> extraction automatique
 
 @app.route("/extraire_cv", methods=["POST"])
 @login_required
@@ -958,7 +958,7 @@ def extraire_cv_route():
     return jsonify(infos)
 
 
-# ── Login / Logout RH ─────────────────────────────────────────────────────────
+# Login / Logout RH
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -1106,7 +1106,7 @@ def reinitialiser_mot_de_passe(token):
     return render_template("reinitialiser_mot_de_passe.html", token=token)
 
 
-# ── Gestion des utilisateurs RH (admin uniquement) ───────────────────────────
+# Gestion des utilisateurs RH (admin uniquement)
 
 @app.route("/admin/utilisateurs")
 @admin_required
@@ -1166,7 +1166,7 @@ def reset_mdp(user_id):
     return redirect(url_for("gestion_utilisateurs"))
 
 
-# ── Dashboard RH ──────────────────────────────────────────────────────────────
+# Dashboard RH
 
 @app.route("/dashboard")
 @login_required
@@ -1413,7 +1413,7 @@ def extraire_offre(filepath):
     return infos
 
 
-# ── Offres RH ─────────────────────────────────────────────────────────────────
+# Offres RH
 
 @app.route("/offres")
 @login_required
@@ -1566,7 +1566,7 @@ def api_candidats():
     return jsonify([c.to_dict() for c in candidats])
 
 
-# ── Export Excel ──────────────────────────────────────────────────────────────
+# Export Excel
 
 @app.route("/export/excel")
 @login_required
@@ -1682,7 +1682,7 @@ def export_excel_offre(offre_id):
     return response
 
 
-# ── Envoi email aux présélectionnés ───────────────────────────────────────────
+# Envoi email aux présélectionnés
 
 @app.route("/offre/<int:offre_id>/notifier", methods=["POST"])
 @login_required
@@ -1755,7 +1755,7 @@ def notifier_preselectionnes(offre_id):
     return redirect(url_for("detail_offre", offre_id=offre_id))
 
 
-# ── Modifier un candidat ──────────────────────────────────────────────────────
+# Modifier un candidat
 
 @app.route("/candidat/<int:candidat_id>/modifier", methods=["GET", "POST"])
 @login_required
@@ -1786,7 +1786,7 @@ def modifier_candidat(candidat_id):
 
 
 
-# ── DÉCISION MANUELLE (candidats « À examiner ») ────────────────────────────
+# DÉCISION MANUELLE (candidats « À examiner »)
 
 @app.route("/candidat/<int:candidat_id>/decision-manuelle", methods=["POST"])
 @login_required
@@ -1815,7 +1815,7 @@ def decision_manuelle_route(candidat_id):
     return redirect(url_for("detail_candidat", candidat_id=candidat_id))
 
 
-# ── VÉRIFICATION DOSSIER ────────────────────────────────────────────────────
+# VÉRIFICATION DOSSIER
 
 @app.route("/candidat/<int:candidat_id>/verification", methods=["GET", "POST"])
 @login_required
@@ -1861,7 +1861,7 @@ def verification_dossier(candidat_id):
     return render_template("verification_dossier.html", candidat=candidat)
 
 
-# ── ENTRETIEN JURY (vue d'ensemble des 4 jurys) ──────────────────────────────
+# ENTRETIEN JURY (vue d'ensemble des 4 jurys)
 
 @app.route("/candidat/<int:candidat_id>/entretien-jury")
 @login_required
@@ -1885,7 +1885,7 @@ def entretien_jury(candidat_id):
                            range4=range(1, 5))
 
 
-# ── FORMULAIRE D'UN JURY INDIVIDUEL ─────────────────────────────────────────
+# FORMULAIRE D'UN JURY INDIVIDUEL
 
 @app.route("/candidat/<int:candidat_id>/jury/<int:num>", methods=["GET", "POST"])
 @login_required
@@ -2015,7 +2015,7 @@ def jury_form(candidat_id, num):
                            coche_par=coche_par)
 
 
-# ── API QUESTIONS ENTRETIEN PARTAGÉES ────────────────────────────────────────
+# API QUESTIONS ENTRETIEN PARTAGÉES
 
 @app.route("/api/questions/<int:candidat_id>/generer", methods=["POST"])
 @login_required
@@ -2103,7 +2103,7 @@ def api_questions_etat(candidat_id):
     })
 
 
-# ── LISTE PRIVÉE NON-CONFORMES ────────────────────────────────────────────────
+# LISTE PRIVÉE NON-CONFORMES
 
 @app.route("/offre/<int:offre_id>/non-conformes")
 @login_required
@@ -2117,7 +2117,7 @@ def non_conformes(offre_id):
     return render_template("non_conformes.html", offre=offre, candidats=nc_list)
 
 
-# ── ENVOYER EMAIL NON-CONFORME ────────────────────────────────────────────────
+# ENVOYER EMAIL NON-CONFORME
 
 @app.route("/candidat/<int:candidat_id>/envoyer-email-nc", methods=["POST"])
 @login_required
@@ -2187,7 +2187,7 @@ def envoyer_email_non_conforme(candidat_id):
     return redirect(request.referrer or url_for("dashboard"))
 
 
-# ── MISE À JOUR CLASSEMENT (prend en compte les 4 jurys + conformité) ────────
+# MISE À JOUR CLASSEMENT (prend en compte les 4 jurys + conformité)
 
 @app.route("/offre/<int:offre_id>/classement")
 @login_required
@@ -2229,7 +2229,7 @@ def classement_offre(offre_id):
     return render_template("classement.html", offre=offre, resultats=resultats)
 
 
-# ── Explication IA (SHAP) ─────────────────────────────────────────────────────
+# Explication IA (SHAP)
 
 @app.route("/candidat/<int:candidat_id>/explication-ia")
 @login_required
@@ -2241,7 +2241,7 @@ def explication_ia(candidat_id):
                            contributions=contributions)
 
 
-# ── Questions d'entretien IA ──────────────────────────────────────────────────
+# Questions d'entretien IA
 
 @app.route("/candidat/<int:candidat_id>/questions-entretien")
 @login_required

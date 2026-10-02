@@ -75,10 +75,10 @@
                 {{ c.verification.motif_interne or '—' }}
               </div>
               <div style="font-size:.7rem;color:var(--gris-moyen);margin-top:4px;">
-                {% if not c.verification.diplome_conforme %}<span class="me-2">❌ Diplôme</span>{% endif %}
-                {% if not c.verification.experience_conforme %}<span class="me-2">❌ Expérience</span>{% endif %}
-                {% if not c.verification.cin_conforme %}<span class="me-2">❌ CIN</span>{% endif %}
-                {% if not c.verification.autres_conformes %}<span class="me-2">❌ Autres docs</span>{% endif %}
+                {% if not c.verification.diplome_conforme %}<span class="me-2"><i class="fas fa-times text-danger me-1"></i>Diplôme</span>{% endif %}
+                {% if not c.verification.experience_conforme %}<span class="me-2"><i class="fas fa-times text-danger me-1"></i>Expérience</span>{% endif %}
+                {% if not c.verification.cin_conforme %}<span class="me-2"><i class="fas fa-times text-danger me-1"></i>CIN</span>{% endif %}
+                {% if not c.verification.autres_conformes %}<span class="me-2"><i class="fas fa-times text-danger me-1"></i>Autres docs</span>{% endif %}
               </div>
             </td>
             <td>

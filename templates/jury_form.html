@@ -137,7 +137,7 @@
 {% block content %}
 <div class="jury-page">
 
-  <!-- ── En-tête ─────────────────────────────────── -->
+  <!-- En-tête -->
   <div class="jury-topbar">
     <div class="container-xl px-4">
       <nav aria-label="breadcrumb" class="mb-2">
@@ -161,7 +161,7 @@
     <form method="POST">
     <div class="row g-4">
 
-      <!-- ══ COLONNE GAUCHE : Fiche + Questions ══════════════════ -->
+      <!-- COLONNE GAUCHE : Fiche + Questions -->
       <div class="col-lg-8">
 
         <!-- Identité jury + critères -->
@@ -240,7 +240,7 @@
           </div>
         </div>
 
-        <!-- ══ Questions IA ══════════════════════════════════════ -->
+        <!-- Questions IA -->
         <div class="jcard">
           <div class="jcard-head">
             <i class="fas fa-robot"></i>
@@ -302,7 +302,7 @@
 
       </div><!-- /col-lg-8 -->
 
-      <!-- ══ COLONNE DROITE : Candidat + Score live ══════════════ -->
+      <!-- COLONNE DROITE : Candidat + Score live -->
       <div class="col-lg-4">
 
         <!-- Fiche candidat -->
@@ -358,7 +358,7 @@
 
 {% block extra_js %}
 <script>
-// ── Sliders ──────────────────────────────────
+// Sliders
 function updateSlider(el, displayId) {
   const v = parseFloat(el.value);
   document.getElementById(displayId).textContent = v % 1 === 0 ? v.toFixed(0) : v.toFixed(1);
@@ -382,7 +382,7 @@ document.querySelectorAll('input[type=range]').forEach(el => {
 });
 recalc();
 
-// ── Questions IA — partagées en temps réel ───
+// Questions IA — partagées en temps réel
 const CANDIDAT_ID = {{ candidat.id }};
 let lastTs = '';
 let polling = null;

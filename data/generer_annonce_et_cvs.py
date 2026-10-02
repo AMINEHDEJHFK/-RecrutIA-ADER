@@ -15,9 +15,7 @@ W, H = A4
 BLEU = (0.10, 0.23, 0.36)
 OR   = (0.78, 0.66, 0.29)
 
-# ═══════════════════════════════════════════════════════════════
 # HELPERS COMMUNS
-# ═══════════════════════════════════════════════════════════════
 
 def draw_text(c, x, y, text, font="Helvetica", size=10, color=(0.1,0.1,0.1)):
     c.setFont(font, size)
@@ -60,9 +58,7 @@ def bullet(c, x, y, text, size=10):
     c.drawString(x + 14, y, text)
     return y - size - 5
 
-# ═══════════════════════════════════════════════════════════════
 # ANNONCE : Chargé de Communication et Marketing Digital
-# ═══════════════════════════════════════════════════════════════
 
 path_ann = os.path.join(OUT_ANN, "Annonce_ADER_Communication_Marketing.pdf")
 c = canvas.Canvas(path_ann, pagesize=A4)
@@ -171,9 +167,7 @@ c.drawCentredString(W/2, 15, "ADER Fes - Immeuble 21, Rue Mohammed Diouri, 30000
 c.save()
 print("Annonce creee :", path_ann)
 
-# ═══════════════════════════════════════════════════════════════
 # HELPERS CVs
-# ═══════════════════════════════════════════════════════════════
 
 def cv_entete(c, nom, titre, email, tel, ville):
     c.setFillColorRGB(*BLEU)
@@ -212,9 +206,7 @@ def cv_item(c, x, y, text):
     c.drawString(x, y, f"- {text}")
     return y - 14
 
-# ═══════════════════════════════════════════════════════════════
 # 8 CVs variés
-# ═══════════════════════════════════════════════════════════════
 
 cvs = [
     # (fichier, nom, prenom, email, tel, ville, titre_cv, diplome, ecole, promo_debut, promo_fin, exps, langues)
